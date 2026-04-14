@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+desktop.ini
+Thumbs.db
+
+# Project specific
+results/
+finetune/checkpoints/
+rag/faiss_index/
+*.pt
+*.bin
+*.safetensors
+
+# Datasets (too large for git, keep in Drive/Dropbox)
+*.csv
