@@ -56,6 +56,12 @@ MODELS = {
         "model_id": "anthropic/claude-sonnet-4",
         "can_finetune": False,
     },
+    "deepseek-v3": {
+        "type": "api",
+        "provider": "deepseek",
+        "model_id": "deepseek/deepseek-chat-v3-0324",
+        "can_finetune": False,
+    },
     "llama-3.1-8b": {
         "type": "hf",
         "model_id": "meta-llama/Llama-3.1-8B-Instruct",
