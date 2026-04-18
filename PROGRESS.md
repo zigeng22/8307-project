@@ -1,7 +1,7 @@
 # 项目进度追踪文档
 
 > 项目名称：Enhancing LLM Performance on Mental Health Tasks via Fine-tuning and RAG  
-> 最后更新：2026-04-15  
+> 最后更新：2026-04-18  
 > 维护人：wtc
 
 ---
@@ -9,16 +9,18 @@
 ## 一、项目总览
 
 ### 实验矩阵
-- **5 个模型**：GPT-4o / Claude-3.5-Sonnet / Llama-3.1-8B / Qwen2.5-7B / Gemma-2-9B
+- **5 个模型**：DeepSeek V3 / Mistral Large / Llama-3.1-8B / Qwen2.5-7B / Gemma-2-9B
 - **3 个任务**：心理状态分类 (Task1) / 临床对话生成 (Task2) / 医疗知识问答 (Task3)
 - **4 种配置**：Base / Fine-tuned / Base+RAG / Fine-tuned+RAG
-- **总计**：60 个实验数据点
+- **总计**：48 个实验数据点（API模型不微调）
+
+> 注：原计划用 GPT-4o + Claude-3.5-Sonnet，因 OpenRouter 账户被这两家提供商封禁，改用 DeepSeek V3 + Mistral Large 替代。
 
 ### 四个阶段
 | 阶段 | 内容 | 状态 |
 |------|------|------|
 | Phase 0 | 框架搭建 + 环境验证 | ✅ 已完成 |
-| Phase 1 | Baseline 零样本评估 | ⏳ 进行中（先跑 GPT-4o + Qwen） |
+| Phase 1 | Baseline 零样本评估 | ⏳ 进行中（DeepSeek V3 + Qwen 已完成） |
 | Phase 2 | LoRA 微调（3个开源模型） | 🔲 未开始 |
 | Phase 3 | RAG 检索增强实验 | 🔲 未开始 |
 | Phase 4 | 全面对比 + 消融分析 + 报告撰写 | 🔲 未开始 |
@@ -126,16 +128,15 @@ wtc/
 - [ ] 上传 Datasets/ 到 Google Drive
 - [ ] 在 Colab 上运行 Section 0 验证
 
-### 🔲 3.2 Phase 1: Baseline 实验
-每个模型需要跑 3 个任务的 zero-shot baseline：
+### ⏳ 3.2 Phase 1: Baseline 实验
 
 | 模型 | Task1 | Task2 | Task3 | 备注 |
 |------|-------|-------|-------|------|
-| GPT-4o | ⬜ | ⬜ | ⬜ | 通过 OpenRouter，优先跑 |
-| Claude-3.5 | ⬜ | ⬜ | ⬜ | 通过 OpenRouter |
-| Llama-3.1-8B | ⬜ | ⬜ | ⬜ | 需要 Colab A100 |
-| Qwen2.5-7B | ⬜ | ⬜ | ⬜ | 需要 Colab A100，优先跑 |
-| Gemma-2-9B | ⬜ | ⬜ | ⬜ | 需要 Colab A100 |
+| DeepSeek V3 | ✅ | ✅ | ✅ | API，已完成 |
+| Mistral Large | ⬜ | ⬜ | ⬜ | API |
+| Llama-3.1-8B | ⬜ | ⬜ | ⬜ | Colab A100 |
+| Qwen2.5-7B | ✅ | ✅ | ✅ | Colab A100，已完成 |
+| Gemma-2-9B | ⬜ | ⬜ | ⬜ | Colab A100 |
 
 **运行方式**：
 ```bash

@@ -62,6 +62,12 @@ MODELS = {
         "model_id": "deepseek/deepseek-chat-v3-0324",
         "can_finetune": False,
     },
+    "mistral-large": {
+        "type": "api",
+        "provider": "mistral",
+        "model_id": "mistralai/mistral-large-2411",
+        "can_finetune": False,
+    },
     "llama-3.1-8b": {
         "type": "hf",
         "model_id": "meta-llama/Llama-3.1-8B-Instruct",
