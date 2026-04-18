@@ -130,7 +130,123 @@ response = model.generate(messages)    # 同样的接口
 
 ---
 
-## 四、实验分四个阶段
+## 四、三大核心概念：Baseline / LoRA微调 / RAG
+
+在看具体命令之前，先理解每个实验阶段到底在做什么。
+
+### 4.1 数据集是怎么划分的
+
+| 数据集 | 总量 | 训练集 | 测试集 | 用途 |
+|--------|------|--------|--------|------|
+| Sentiment Analysis | ~30K 条 | ❌ 不训练 | 1000 条（按7类均衡抽样） | Task1 分类评估 |
+| MentalChat16K | 16,084 条 | ~15,584 条 | 500 条 | 训练集 → LoRA微调；测试集 → Task2 评估 |
+| MedQuAD | ~47K 条 | 全部用于 RAG 索引 | 500 条（心理健康相关） | 全量 → RAG检索库；测试集 → Task3 评估 |
+
+**关键**：所有4种配置（Base / Fine-tuned / Base+RAG / Fine-tuned+RAG）的评估都用 **完全相同的测试集**，唯一变化的是模型本身或 prompt 内容。这样才能公平对比。
+
+### 4.2 Baseline 是什么
+
+**一句话**：不做任何增强，直接把测试问题丢给模型，看它"裸考"能答多好。
+
+```
+测试问题 → [构造 Prompt] → 发给模型 → 模型回答 → 和标准答案比较 → 得到指标
+```
+
+这是所有实验的基准参照——后面 Fine-tuned 和 RAG 的指标都是和 Baseline 对比。
+
+### 4.3 LoRA 微调是什么
+
+**一句话**：用 MentalChat16K 的 15,584 条训练数据教模型"如何做心理咨询师"。
+
+**训练数据长什么样**（MentalChat16K 每一行）：
+
+| instruction | input | output |
+|---|---|---|
+| "你是一名心理咨询师..." | "最近工作压力很大，睡不着" | "我能感受到你的压力。你能告诉我这种状态持续多久了吗？" |
+
+**训练过程**：
+1. 把 instruction + input + output 组合成一段完整对话文本
+2. 让模型 **学习在看到 instruction+input 之后，生成和 output 尽可能相似的回答**
+3. 重复 3 遍（3 epochs），训练 loss 持续下降说明模型在学习
+4. LoRA 只微调模型注意力层旁边插入的小矩阵（占总参数 ~0.5%），原始模型冻结不动
+
+**训练完成后**：保存 LoRA 权重（几十 MB 的小文件）到 `finetune/checkpoints/{模型名}/`
+
+**评估方式**：用微调后的模型重新跑 **同一份测试集**，对比 Baseline 指标：
+- Baseline BERTScore = 0.848 → Fine-tuned BERTScore = 0.880 → 提升 +0.032
+
+**注意**：虽然模型只在 MentalChat16K（Task2 的训练集）上训练，但我们也测试它在 Task1（分类）和 Task3（问答）上的表现，看是否有"跨任务迁移"效果。API 模型不做微调。
+
+### 4.4 RAG 是什么
+
+**一句话**：给模型"开卷考试"——在提问之前，先从知识库检索相关参考信息，拼到 prompt 里。
+
+**RAG 没有训练过程**，它是在推理时增强 prompt 的方法。
+
+**工作流程**：
+
+```
+                     ┌──────────────────────────────────────┐
+                     │ MedQuAD 全部 47K 条问答              │
+                     │ → 切成 500 字的小块（chunk）           │
+                     │ → 用 sentence-transformers 转成向量   │
+                     │ → 存入 FAISS 向量数据库               │
+                     │   （一次性操作，python rag/indexer.py）│
+                     └────────────────┬─────────────────────┘
+                                      │
+测试问题 ──→ 转成向量 ──→ 在 FAISS 中找最相似的 3 条 ──→ 拼到 Prompt 前面
+                                                              │
+                                              ┌───────────────┘
+                                              ▼
+            "请参考以下背景信息回答问题：
+             参考1：[检索到的相关知识]
+             参考2：[...]
+             参考3：[...]
+             ---
+             Question: 抑郁症的主要症状有哪些？"
+                              │
+                              ▼
+                    发给模型 → 生成回答 → 评估指标
+```
+
+**查询（query）从哪来？就是测试集里的数据**：
+
+| 任务 | 查询内容 | 举例 |
+|------|---------|------|
+| Task1 | 用户帖子文本 | "I've been feeling hopeless for weeks..." |
+| Task2 | 患者的描述 | "最近工作压力很大，睡不着" |
+| Task3 | 医疗问题 | "What are the symptoms of depression?" |
+
+**对比 Base 和 Base+RAG 的 prompt 区别**：
+
+| 配置 | Prompt 内容 |
+|------|------------|
+| Base | "Question: 抑郁症和双相的区别？请回答。" |
+| Base+RAG | "参考以下信息：\n[检索到的3条参考]\n---\nQuestion: 抑郁症和双相的区别？请回答。" |
+
+**预期效果**：
+- Task3（医疗问答）：RAG 效果最显著，因为检索库里可能直接有相关答案
+- Task1/Task2：RAG 效果可能不明显——这本身就是有价值的发现
+
+### 4.5 四种配置的完整对比
+
+```
+                          ┌─ Base: 原模型 + 原prompt
+同一份测试数据 ──→ 4种方式 ─┤─ Fine-tuned: 微调后模型 + 原prompt
+                          ├─ Base+RAG: 原模型 + 增强prompt（加了检索信息）
+                          └─ Fine-tuned+RAG: 微调后模型 + 增强prompt
+                                     │
+                                     ▼
+                            同一套评估指标
+                       （Accuracy/F1/ROUGE/BERTScore）
+                                     │
+                                     ▼
+                         对比表格 + 分析 = 报告内容
+```
+
+---
+
+## 五、实验操作命令
 
 ### Phase 1: Baseline（零样本）
 
@@ -226,15 +342,24 @@ python experiments/run_rag.py --model llama-3.1-8b --task task1 \
 
 ### Phase 4: 汇总分析 + 写报告
 
-- 汇总全部 48 个实验数据点
-- 对比分析：Base vs Fine-tuned vs RAG vs Fine-tuned+RAG
-- 错误分析：各模型在哪些类别/场景表现差
-- Case Study：挑 3-5 个代表性案例展示
-- 撰写最终报告
+48 组实验全部跑完后，每组实验的结果在 `results/{配置}/{模型名}/task{N}_metrics.json`。
+
+**需要做的分析工作**：
+
+1. **填写完整结果表**：把 48 个指标汇总成一张大表（5模型 × 3任务 × 4配置）
+2. **对比分析**：
+   - Base vs Fine-tuned → 微调提升了多少？
+   - Base vs Base+RAG → RAG 提升了多少？
+   - Fine-tuned vs Fine-tuned+RAG → 两者叠加有没有额外收益？
+3. **错误分析**：
+   - Task1：哪些心理状态类别最容易被搞混？（看 per_class F1）
+   - Task2/3：挑几个模型回答特别好/特别差的样本做 case study
+4. **可视化**：柱状图对比各模型各配置的指标
+5. **撰写报告**（50% 成绩）+ **制作 Presentation**（40% 成绩）
 
 ---
 
-## 五、组员分工建议
+## 六、组员分工建议
 
 | 角色 | 负责内容 | 需要什么 |
 |------|---------|---------|
@@ -246,9 +371,9 @@ python experiments/run_rag.py --model llama-3.1-8b --task task1 \
 
 ---
 
-## 六、在 Colab 上跑实验的操作流程
+## 七、在 Colab 上跑实验的操作流程
 
-### 6.1 首次设置（每次新开 Colab 都需要）
+### 7.1 首次设置（每次新开 Colab 都需要）
 
 1. **Runtime → Change runtime type → A100 GPU**（跑开源模型时选，API模型不需要）
 2. 运行以下 cell：
@@ -280,7 +405,7 @@ import getpass
 os.environ['OPENROUTER_API_KEY'] = getpass.getpass('Paste OpenRouter Key: ')
 ```
 
-### 6.2 数据集在 Google Drive 上的位置
+### 7.2 数据集在 Google Drive 上的位置
 
 需要提前上传到 `MyDrive/8307/Datasets/`：
 ```
@@ -292,7 +417,7 @@ MyDrive/8307/Datasets/
     └── Synthetic_Data_10K.csv
 ```
 
-### 6.3 运行完后备份结果
+### 7.3 运行完后备份结果
 
 ```python
 !cp -r results/ /content/drive/MyDrive/8307/results_backup/
@@ -300,7 +425,7 @@ MyDrive/8307/Datasets/
 
 ---
 
-## 七、常见问题
+## 八、常见问题
 
 **Q: API 调用返回 403 怎么办？**  
 A: OpenAI 和 Anthropic 的模型在 OpenRouter 上被封了。用 DeepSeek V3 和 Mistral Large 替代。如果找到新的能用的 API 渠道，可以随时加回 GPT-4o 和 Claude。
