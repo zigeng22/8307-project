@@ -66,12 +66,28 @@ def main():
     df = load_mentalchat()
     train_df, _ = split_task2(df)
 
+    # Some rows may contain null/blank fields; drop them to avoid chat-template errors.
+    required_cols = ["instruction", "input", "output"]
+    before_rows = len(train_df)
+    train_df = train_df.dropna(subset=required_cols).copy()
+    for col in required_cols:
+        train_df[col] = train_df[col].astype(str).str.strip()
+    train_df = train_df[
+        (train_df["instruction"] != "") &
+        (train_df["output"] != "")
+    ]
+    after_rows = len(train_df)
+    print(f"Training rows: {before_rows} -> {after_rows} after cleaning")
+
     def format_example(row):
         """Format into chat-style text for SFT."""
+        system_text = str(row.get("instruction", "") or "")
+        user_text = str(row.get("input", "") or "")
+        assistant_text = str(row.get("output", "") or "")
         messages = [
-            {"role": "system", "content": row["instruction"]},
-            {"role": "user", "content": row["input"]},
-            {"role": "assistant", "content": row["output"]},
+            {"role": "system", "content": system_text},
+            {"role": "user", "content": user_text},
+            {"role": "assistant", "content": assistant_text},
         ]
         if hasattr(tokenizer, "apply_chat_template"):
             text = tokenizer.apply_chat_template(
@@ -79,9 +95,9 @@ def main():
             )
         else:
             text = (
-                f"### System: {row['instruction']}\n"
-                f"### User: {row['input']}\n"
-                f"### Assistant: {row['output']}"
+                f"### System: {system_text}\n"
+                f"### User: {user_text}\n"
+                f"### Assistant: {assistant_text}"
             )
         return {"text": text}
 
