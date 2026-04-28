@@ -1,8 +1,10 @@
 """
 Evaluation metrics for all three tasks.
 """
+import os
 import re
 from collections import Counter
+from pathlib import Path
 from typing import List
 
 from sklearn.metrics import (
@@ -58,7 +60,56 @@ def eval_bertscore(predictions: List[str], references: List[str],
                    lang: str = "en") -> dict:
     """Compute BERTScore (F1)."""
     from bert_score import score as bert_score_fn
-    P, R, F1 = bert_score_fn(predictions, references, lang=lang, verbose=False)
+
+    def resolve_local_bertscore_model() -> str:
+        """Resolve local roberta-large path for offline evaluation."""
+        candidates = []
+        env_model = os.environ.get("BERTSCORE_MODEL_TYPE")
+        env_path = os.environ.get("BERTSCORE_MODEL_PATH")
+        if env_model:
+            candidates.append(env_model)
+        if env_path:
+            candidates.append(env_path)
+
+        # Common predownload/cache locations on local servers
+        candidates.extend([
+            "/mnt/sdc/roberta-large",
+            "/workspace/.cache/huggingface/hub/models--roberta-large",
+            str(Path.home() / ".cache" / "huggingface" / "hub" / "models--roberta-large"),
+        ])
+
+        for raw in candidates:
+            p = Path(raw)
+            if not p.exists():
+                continue
+
+            # Plain model directory layout
+            if (p / "config.json").exists():
+                return str(p)
+
+            # Hugging Face cache snapshots layout
+            snapshot_cfgs = list(p.glob("snapshots/*/config.json"))
+            if snapshot_cfgs:
+                return str(snapshot_cfgs[0].parent)
+
+        return ""
+
+    model_type = resolve_local_bertscore_model()
+    try:
+        if model_type:
+            P, R, F1 = bert_score_fn(
+                predictions, references, model_type=model_type, verbose=False
+            )
+        else:
+            P, R, F1 = bert_score_fn(
+                predictions, references, lang=lang, verbose=False
+            )
+    except Exception as e:
+        raise RuntimeError(
+            "BERTScore failed. If running offline, set BERTSCORE_MODEL_TYPE "
+            "to a local roberta-large directory containing config.json."
+        ) from e
+
     return {"bertscore_f1": round(F1.mean().item(), 4)}
 
 
