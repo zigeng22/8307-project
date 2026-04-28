@@ -38,6 +38,26 @@ def _safe_text(value) -> str:
     return str(value).strip()
 
 
+def _load_partial_predictions(partial_path: Path, max_len: int) -> list:
+    """Load partial predictions from disk for resume support."""
+    if not partial_path.exists():
+        return []
+    try:
+        with open(partial_path, "r", encoding="utf-8") as f:
+            preds = json.load(f)
+        if not isinstance(preds, list):
+            return []
+        return preds[:max_len]
+    except Exception:
+        return []
+
+
+def _save_partial_predictions(partial_path: Path, predictions: list):
+    """Persist partial predictions for resumable execution."""
+    with open(partial_path, "w", encoding="utf-8") as f:
+        json.dump(predictions, f, indent=2, ensure_ascii=False)
+
+
 def get_model(model_name: str, lora_path: str = None):
     cfg = MODELS[model_name]
     if cfg["type"] == "api":
@@ -56,42 +76,81 @@ def get_model(model_name: str, lora_path: str = None):
     raise ValueError(f"Unknown model config: {model_name}")
 
 
-def run_task1_rag(model, test_df):
+def run_task1_rag(model, test_df, partial_path: Path = None, save_every: int = 20):
     predictions = []
-    for _, row in tqdm(test_df.iterrows(), total=len(test_df), desc="Task1+RAG"):
+    start_idx = 0
+    if partial_path is not None:
+        predictions = _load_partial_predictions(partial_path, len(test_df))
+        start_idx = len(predictions)
+        if start_idx > 0:
+            print(f"Resuming Task1+RAG from sample {start_idx}/{len(test_df)}")
+
+    pending_df = test_df.iloc[start_idx:]
+    for i, (_, row) in enumerate(
+        tqdm(pending_df.iterrows(), total=len(pending_df), desc="Task1+RAG")
+    ):
         text = _safe_text(row["text"])
         context = retrieve(text)
         msgs = build_task1_messages(text, rag_context=context)
         pred = model.generate(msgs, max_tokens=50)
         predictions.append(pred)
+
+        if partial_path is not None and ((i + 1) % save_every == 0 or i + 1 == len(pending_df)):
+            _save_partial_predictions(partial_path, predictions)
     results = eval_task("task1", predictions, test_df["label"].tolist(),
                         labels=SENTIMENT_LABELS)
     results["predictions"] = predictions
     return results
 
 
-def run_task2_rag(model, test_df):
+def run_task2_rag(model, test_df, partial_path: Path = None, save_every: int = 20):
     predictions = []
-    for _, row in tqdm(test_df.iterrows(), total=len(test_df), desc="Task2+RAG"):
+    start_idx = 0
+    if partial_path is not None:
+        predictions = _load_partial_predictions(partial_path, len(test_df))
+        start_idx = len(predictions)
+        if start_idx > 0:
+            print(f"Resuming Task2+RAG from sample {start_idx}/{len(test_df)}")
+
+    pending_df = test_df.iloc[start_idx:]
+    for i, (_, row) in enumerate(
+        tqdm(pending_df.iterrows(), total=len(pending_df), desc="Task2+RAG")
+    ):
         patient_input = _safe_text(row["input"])
         context = retrieve(patient_input)
         msgs = build_task2_messages(patient_input, rag_context=context)
         pred = model.generate(msgs, max_tokens=512)
         predictions.append(pred)
+
+        if partial_path is not None and ((i + 1) % save_every == 0 or i + 1 == len(pending_df)):
+            _save_partial_predictions(partial_path, predictions)
     references = test_df["output"].tolist()
     results = eval_task("task2", predictions, references)
     results["predictions"] = predictions
     return results
 
 
-def run_task3_rag(model, test_df):
+def run_task3_rag(model, test_df, partial_path: Path = None, save_every: int = 20):
     predictions = []
-    for _, row in tqdm(test_df.iterrows(), total=len(test_df), desc="Task3+RAG"):
+    start_idx = 0
+    if partial_path is not None:
+        predictions = _load_partial_predictions(partial_path, len(test_df))
+        start_idx = len(predictions)
+        if start_idx > 0:
+            print(f"Resuming Task3+RAG from sample {start_idx}/{len(test_df)}")
+
+    pending_df = test_df.iloc[start_idx:]
+    for i, (_, row) in enumerate(
+        tqdm(pending_df.iterrows(), total=len(pending_df), desc="Task3+RAG")
+    ):
         question = _safe_text(row["question"])
         context = retrieve(question)
         msgs = build_task3_messages(question, rag_context=context)
         pred = model.generate(msgs, max_tokens=512)
         predictions.append(pred)
+
+        if partial_path is not None and ((i + 1) % save_every == 0 or i + 1 == len(pending_df)):
+            _save_partial_predictions(partial_path, predictions)
     references = test_df["answer"].tolist()
     results = eval_task("task3", predictions, references)
     results["predictions"] = predictions
@@ -121,18 +180,20 @@ def main():
         print(f"Running {task} on {args.model} ({config_label})")
         print(f"{'='*50}")
 
+        partial_path = out_dir / f"{task}_predictions.partial.json"
+
         if task == "task1":
             df = load_sentiment()
             test_df = split_task1(df)
-            results = run_task1_rag(model, test_df)
+            results = run_task1_rag(model, test_df, partial_path=partial_path)
         elif task == "task2":
             df = load_mentalchat()
             _, test_df = split_task2(df)
-            results = run_task2_rag(model, test_df)
+            results = run_task2_rag(model, test_df, partial_path=partial_path)
         elif task == "task3":
             df = load_medquad(mental_health_only=False)
             test_df = split_task3(df)
-            results = run_task3_rag(model, test_df)
+            results = run_task3_rag(model, test_df, partial_path=partial_path)
 
         preds = results.pop("predictions")
         summary_path = out_dir / f"{task}_metrics.json"
@@ -144,6 +205,9 @@ def main():
         preds_path = out_dir / f"{task}_predictions.json"
         with open(preds_path, "w") as f:
             json.dump(preds, f, indent=2, ensure_ascii=False)
+
+        if partial_path.exists():
+            partial_path.unlink()
 
 
 if __name__ == "__main__":
