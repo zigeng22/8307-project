@@ -194,3 +194,53 @@ find /home/hiteam -type f -path "*/results*/*/*/*_metrics.json" | sort
 8. 出现 Connection reset 多数是本地 SSH 断联，不等于远端 tmux 任务停止。
 9. 结果目录被 gitignore 忽略是正常现象，不能依赖 git 同步 results。
 10. 多人并行必须遵守三原则：不同 GPU、不同 tmux 会话、不同 output_dir。
+
+---
+
+## 10. 远程网络环境自检（不调用具体模型）
+
+目标：确认服务器出口 IP 是否为境外、关键域名是否可达。
+
+### 10.1 查询公网出口 IP 与地理位置
+
+python - <<'PY'
+import json, urllib.request
+
+ip = urllib.request.urlopen("https://api64.ipify.org", timeout=10).read().decode().strip()
+print("Public IP:", ip)
+
+url = f"https://ipapi.co/{ip}/json/"
+info = json.loads(urllib.request.urlopen(url, timeout=10).read().decode())
+print("Country:", info.get("country_name"), f"({info.get('country_code')})")
+print("Region:", info.get("region"))
+print("City:", info.get("city"))
+print("Org:", info.get("org"))
+PY
+
+### 10.2 测试关键域名 HTTPS 连通（不带密钥）
+
+curl -I --max-time 15 https://huggingface.co
+curl -I --max-time 15 https://openrouter.ai/api/v1/models
+curl -I --max-time 15 https://api.openai.com/v1/models
+curl -I --max-time 15 https://api.anthropic.com/v1/messages
+
+判定规则：
+1. 返回 200/301/302 说明可达。
+2. 返回 401/403 也说明可达（只是未授权）。
+3. 超时、无法解析域名、TLS 失败说明网络路径有问题。
+
+### 10.3 建议每次开工前做一次快速检查
+
+python - <<'PY'
+import subprocess
+
+targets = [
+	"https://huggingface.co",
+	"https://openrouter.ai/api/v1/models",
+]
+
+for t in targets:
+	cmd = ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code} %{time_total}\\n", "--max-time", "15", t]
+	r = subprocess.run(cmd, capture_output=True, text=True)
+	print(t, "->", (r.stdout or r.stderr).strip())
+PY
