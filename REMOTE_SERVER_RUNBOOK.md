@@ -146,3 +146,51 @@ export BERTSCORE_MODEL_TYPE=/mnt/sdc/roberta-large
 6. 看日志尾部：tail -f 日志文件
 7. 查任务进程：ps -ef | grep python
 8. 查结果文件：ls -lah 结果目录
+
+---
+
+## 8. 高频执行命令（从本轮实战沉淀）
+
+### 8.1 登录后固定四步
+
+source /opt/venvs/llm8307/bin/activate
+cd /home/hiteam/8307-project
+export PYTHONPATH=$(pwd):$PYTHONPATH
+nvidia-smi
+
+### 8.2 安全拉取更新（避免本地热修复冲突）
+
+git stash push -m "temp-before-pull" -- finetune/lora_train.py models/hf_model.py evaluation/metrics.py
+git pull
+
+### 8.3 离线评估固定环境变量
+
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export BERTSCORE_MODEL_TYPE=/mnt/sdc/roberta-large
+export BERTSCORE_NUM_LAYERS=17
+
+### 8.4 三模型并行模板（示例）
+
+CUDA_VISIBLE_DEVICES=0 python ... --output_dir /home/hiteam/results_gangda
+CUDA_VISIBLE_DEVICES=1 python ... --output_dir /home/hiteam/results_llama
+CUDA_VISIBLE_DEVICES=2 python ... --output_dir /home/hiteam/results_gemma
+
+### 8.5 统一盘点完成情况
+
+find /home/hiteam -type f -path "*/results*/*/*/*_metrics.json" | sort
+
+---
+
+## 9. 本轮关键问答与经验结论（持续更新）
+
+1. EasyConnect 仅负责 VPN 连接；真正使用算力要通过 SSH 登录服务器。
+2. 密码输入不回显是正常行为，不是键盘失灵。
+3. 未开 tmux 跑长任务风险高，断线可能导致任务中断。
+4. Baseline 的 task 文件是分任务写盘；task2 评估阶段崩溃时通常只会留下 task1 的 json。
+5. 4090 24GB 可跑 7B/9B，但微调需降低 batch 与序列长度以规避 OOM。
+6. Gemma 不支持 system role 时，需做模板兼容处理。
+7. 离线 BERTScore 需要本地 roberta-large 路径，并显式设置 BERTSCORE_NUM_LAYERS=17。
+8. 出现 Connection reset 多数是本地 SSH 断联，不等于远端 tmux 任务停止。
+9. 结果目录被 gitignore 忽略是正常现象，不能依赖 git 同步 results。
+10. 多人并行必须遵守三原则：不同 GPU、不同 tmux 会话、不同 output_dir。

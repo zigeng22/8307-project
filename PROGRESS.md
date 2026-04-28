@@ -60,7 +60,31 @@
 
 ---
 
-## 五、近期关键修复记录（远程实战）
+## 五、当前 GPU 使用与并行计划（8 卡）
+
+### 5.1 当前已占用（约 3/8）
+
+| GPU | 当前任务 | 状态 |
+|-----|----------|------|
+| GPU0 | Qwen Fine-tuned 评估 / 后续 Qwen FT+RAG | 进行中 |
+| GPU1 | Llama Baseline 补跑 | 进行中 |
+| GPU2 | Gemma Baseline 补跑 | 进行中 |
+
+### 5.2 其余 5 张卡可并行任务建议
+
+| GPU | 建议任务 | 前置条件 | 备注 |
+|-----|----------|----------|------|
+| GPU3 | Llama LoRA 微调 | Llama Baseline 三任务补齐 | 重任务，单独占卡 |
+| GPU4 | Gemma LoRA 微调 | Gemma Baseline 三任务补齐 | 重任务，单独占卡 |
+| GPU5 | Qwen Fine-tuned + RAG | Qwen Fine-tuned task3 完成 | 可尽快启动 |
+| GPU6 | Llama Base + RAG | Llama Baseline 补齐 | 与微调线并行 |
+| GPU7 | Gemma Base + RAG | Gemma Baseline 补齐 | 与微调线并行 |
+
+说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进。
+
+---
+
+## 六、近期关键修复记录（远程实战）
 
 1. 离线模型路径
 - 服务器无法外网下载 HuggingFace 模型时，将 model_id 改为本地路径并设置离线环境变量。
@@ -79,7 +103,7 @@
 
 ---
 
-## 六、下一步计划（按优先级）
+## 七、下一步计划（按优先级）
 
 1. 完成 Qwen Fine-tuned 评估结果落盘并核验三任务指标文件。
 2. 补齐 Llama Baseline 三任务结果。
@@ -90,7 +114,7 @@
 
 ---
 
-## 七、结果目录约定
+## 八、结果目录约定
 
 - /home/hiteam/results_gangda
 - /home/hiteam/results_llama
