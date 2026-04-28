@@ -102,6 +102,18 @@
 5. BERTScore 离线依赖
 - Task2 评估时 roberta-large 未命中缓存导致报错，已在评估脚本增加本地路径解析（支持 BERTSCORE_MODEL_TYPE）。
 
+6. 数据集导入流程
+- 已明确采用“先检查 `/home/hiteam/Datasets`，缺失则从本地 Dropbox 上传”的标准流程。
+- loader 自检命令通过后再启动实验，避免运行中才报找不到文件。
+
+7. 网络出口限制（2026-04-29 实测）
+- 出口 IP：123.58.249.106（中国北京联通）
+- huggingface.co：超时，不可达
+- openrouter.ai：可达（HTTP 200）
+- api.openai.com：超时，不可达
+- api.anthropic.com：可达但 403
+- 执行策略：开源模型离线本地权重；API 优先走 OpenRouter。
+
 ---
 
 ## 七、下一步计划（按优先级）
