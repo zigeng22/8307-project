@@ -53,6 +53,7 @@
 
 1. Qwen 评估
 - Qwen Fine-tuned 评估（Task1/2/3）正在运行。
+- Qwen Base+RAG 已启动并行运行。
 
 2. Llama 与 Gemma Baseline 补齐
 - Llama：Task1 已完成，Task2 曾在 BERTScore 阶段因离线 roberta-large 路径问题中断，已提供修复方案后补跑。

@@ -1,208 +1,208 @@
-# 远程服务器实验操作手册（EasyConnect + SSH + tmux）
+# 远程设备快速上手手册（EasyConnect + SSH + 实验执行）
 
-> 适用场景：已获得算力公司提供的 Linux 服务器，需在远程 GPU 上稳定运行本项目。
-> 更新日期：2026-04-28
-
----
-
-## 1. 一次性认知
-
-1. EasyConnect 负责连 VPN 网络，不负责自动运行训练。
-2. 真正使用远程算力的入口是 SSH 会话。
-3. 长任务必须放在 tmux 中跑，防止本地断网后任务中断。
+> 目标：让组员看到这份文档后，可在 Windows 上快速连上远程 Linux 服务器并开始跑实验。
+> 更新时间：2026-04-28
 
 ---
 
-## 2. 从连接到开跑的标准流程
+## 1. 你需要的三类信息
 
-### Step A：连接 VPN
-1. 打开 EasyConnect 并登录。
-2. 看到“已成功登录”即可。
+在开始之前，先向算力公司确认以下信息：
 
-### Step B：SSH 登录服务器
-1. 在本机 PowerShell 或 cmd 执行：
+1. EasyConnect 入口
+- 客户端下载地址（例如公司给的地址）
+- VPN 登录账号
+- VPN 登录密码
+
+2. Linux 服务器登录信息
+- 服务器 IP（示例：172.17.0.18）
+- SSH 用户名（示例：hiteam）
+- SSH 密码
+
+3. 项目路径信息
+- 项目代码目录（示例：/home/hiteam/8307-project）
+- Python 虚拟环境目录（示例：/opt/venvs/llm8307）
+- 数据集目录（示例：/home/hiteam/Datasets）
+
+---
+
+## 2. 安装并登录 EasyConnect（Windows）
+
+### Step 1：下载并安装
+
+1. 打开公司给的 EasyConnect 下载地址。
+2. 下载并安装客户端。
+3. 安装完成后打开 EasyConnect。
+
+### Step 2：填写 VPN 地址并登录
+
+1. 在地址框输入公司给的 VPN 地址。
+2. 输入 VPN 账号和密码。
+3. 登录成功后，保持 EasyConnect 窗口处于连接状态。
+
+说明：
+- EasyConnect 的作用是打通网络通道。
+- 真正执行实验命令是在 SSH 登录后的 Linux 终端里完成。
+
+---
+
+## 3. 打开 cmd/PowerShell 并 SSH 登录 Linux
+
+### Step 1：打开本机终端
+
+可使用以下任一终端：
+
+1. Windows cmd
+2. Windows PowerShell
+3. Windows Terminal
+
+### Step 2：SSH 登录
+
+~~~bash
+ssh 用户名@服务器IP
+~~~
+
+示例：
+
+~~~bash
 ssh hiteam@172.17.0.18
-2. 输入 SSH 密码（密码输入时终端不回显，正常）。
+~~~
 
-### Step C：激活环境与进入项目
-1. source /opt/venvs/llm8307/bin/activate
-2. cd /home/hiteam/8307-project
-3. export PYTHONPATH=$(pwd):$PYTHONPATH
+说明：
+- 输入密码时不会显示字符，这是正常现象。
+- 输入后直接按回车。
 
-### Step D：确认 GPU 与数据
-1. nvidia-smi
-2. python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
-3. python -c "from data.loader import load_sentiment, load_mentalchat, load_medquad; print(len(load_sentiment()), len(load_mentalchat()), len(load_medquad()))"
+登录成功后会出现类似：
 
-### Step E：进入 tmux 跑任务
-1. tmux new -s exp
-2. 在会话里执行实验命令。
-3. 退出不杀任务：Ctrl+b 然后按 d。
-4. 回到会话：tmux attach -t exp。
+~~~bash
+hiteam@hiteam:~$
+~~~
 
 ---
 
-## 3. 常用实验命令模板
+## 4. 首次登录后先做环境检查
 
-### 3.1 Baseline
-python experiments/run_baseline.py --model qwen2.5-7b --task all --output_dir /home/hiteam/results_gangda
+按顺序执行：
 
-### 3.2 LoRA 微调
-python finetune/lora_train.py --model qwen2.5-7b --output_dir /home/hiteam/checkpoints/qwen2.5-7b
-
-### 3.3 Fine-tuned 评估
-python experiments/run_finetuned.py --model qwen2.5-7b --task all --lora_path /home/hiteam/checkpoints/qwen2.5-7b --output_dir /home/hiteam/results_gangda
-
-### 3.4 RAG 索引与评估
-python rag/indexer.py
-python experiments/run_rag.py --model qwen2.5-7b --task all --output_dir /home/hiteam/results_gangda
-python experiments/run_rag.py --model qwen2.5-7b --task all --lora_path /home/hiteam/checkpoints/qwen2.5-7b --output_dir /home/hiteam/results_gangda
-
----
-
-## 4. 多人并行与多 GPU 规范
-
-1. 每个任务固定一张卡：
-CUDA_VISIBLE_DEVICES=1 python ...
-2. 每个任务独立 output_dir：
-/home/hiteam/results_llama, /home/hiteam/results_gemma, /home/hiteam/results_gangda
-3. 每个任务独立 tmux 会话：
-llama_base, gemma_base, qwen_ft
-4. 开跑前检查占用：
-watch -n 2 nvidia-smi
-
----
-
-## 5. 我们遇到过的典型问题与修复
-
-### 5.1 SSH 登录问题
-问题：Connection closed / Permission denied。
-处理：确认 VPN 已连接；确认使用 SSH 密码而不是 VPN 密码；必要时用 ssh -v 排查。
-
-### 5.2 python 找不到
-问题：Command 'python' not found。
-处理：未激活虚拟环境。执行 source /opt/venvs/llm8307/bin/activate，或直接用 /opt/venvs/llm8307/bin/python。
-
-### 5.3 数据路径报错
-问题：找不到 /home/hiteam/Datasets/...。
-处理：按代码要求，Datasets 必须位于项目上一级；可用软链接对齐路径。
-
-### 5.4 Git pull 被本地改动阻塞
-问题：local changes would be overwritten by merge。
-处理：先 git stash push -- 指定文件，再 git pull；成功后再决定是否恢复 stash。
-
-### 5.5 无外网导致模型下载失败
-问题：huggingface 无法连接。
-处理：改用本地模型目录，设置：
-export HF_HUB_OFFLINE=1
-export TRANSFORMERS_OFFLINE=1
-
-### 5.6 Gemma 模板不支持 system role
-问题：TemplateError: System role not supported。
-处理：在模型封装中对 gemma 自动移除 system 消息。
-
-### 5.7 微调模板中 NoneType 报错
-问题：NoneType not subscriptable / apply_chat_template 崩溃。
-处理：训练前清洗空值行，并把 instruction/input/output 做安全字符串转换。
-
-### 5.8 多卡设备不一致
-问题：Expected all tensors to be on same device。
-处理：固定单卡运行并设置 CUDA_VISIBLE_DEVICES，避免 auto device_map 跨卡。
-
-### 5.9 OOM 显存不足
-问题：CUDA out of memory on 4090 24GB。
-处理：降低 per_device_train_batch_size，提升 gradient_accumulation_steps，降低 max_seq_length。
-
-### 5.10 Task2 评估阶段 BERTScore 报错
-问题：离线环境找不到 roberta-large。
-处理：设置本地模型路径：
-export BERTSCORE_MODEL_TYPE=/mnt/sdc/roberta-large
-并使用已修复的 evaluation/metrics.py。
-
-### 5.11 终端出现 ^[[B
-问题：滚轮或方向键转义字符被原样打印。
-处理：在训练窗口避免滚轮；另开窗口看日志；执行 stty sane 或 reset 恢复终端。
-
----
-
-## 6. 日常推荐操作节奏
-
-1. 登录后第一件事：激活环境 + 进入项目 + 设置 PYTHONPATH。
-2. 长任务一律 tmux 跑。
-3. 每个任务开跑时显式绑定 CUDA_VISIBLE_DEVICES。
-4. 输出目录按人/按模型隔离。
-5. 任务结束立即检查结果目录与 metrics 文件是否落盘。
-6. 每日收工前备份 logs、checkpoints、results。
-
----
-
-## 7. 常用检查命令速查
-
-1. 看会话：tmux ls
-2. 回会话：tmux attach -t 会话名
-3. 退会话不杀任务：Ctrl+b, d
-4. 看 GPU：nvidia-smi
-5. 持续监控 GPU：watch -n 2 nvidia-smi
-6. 看日志尾部：tail -f 日志文件
-7. 查任务进程：ps -ef | grep python
-8. 查结果文件：ls -lah 结果目录
-
----
-
-## 8. 高频执行命令（从本轮实战沉淀）
-
-### 8.1 登录后固定四步
-
+~~~bash
+# 1) 激活环境
 source /opt/venvs/llm8307/bin/activate
+
+# 2) 进入项目目录
 cd /home/hiteam/8307-project
+
+# 3) 设置Python导入路径
 export PYTHONPATH=$(pwd):$PYTHONPATH
+
+# 4) 检查GPU
 nvidia-smi
 
-### 8.2 安全拉取更新（避免本地热修复冲突）
+# 5) 检查PyTorch与CUDA
+python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 
-git stash push -m "temp-before-pull" -- finetune/lora_train.py models/hf_model.py evaluation/metrics.py
-git pull
+# 6) 检查数据集可读
+python -c "from data.loader import load_sentiment, load_mentalchat, load_medquad; print(len(load_sentiment()), len(load_mentalchat()), len(load_medquad()))"
+~~~
 
-### 8.3 离线评估固定环境变量
-
-export HF_HUB_OFFLINE=1
-export TRANSFORMERS_OFFLINE=1
-export BERTSCORE_MODEL_TYPE=/mnt/sdc/roberta-large
-export BERTSCORE_NUM_LAYERS=17
-
-### 8.4 三模型并行模板（示例）
-
-CUDA_VISIBLE_DEVICES=0 python ... --output_dir /home/hiteam/results_gangda
-CUDA_VISIBLE_DEVICES=1 python ... --output_dir /home/hiteam/results_llama
-CUDA_VISIBLE_DEVICES=2 python ... --output_dir /home/hiteam/results_gemma
-
-### 8.5 统一盘点完成情况
-
-find /home/hiteam -type f -path "*/results*/*/*/*_metrics.json" | sort
+如果以上命令都正常，说明可以开始跑实验。
 
 ---
 
-## 9. 本轮关键问答与经验结论（持续更新）
+## 5. 最常用实验命令（直接复制）
 
-1. EasyConnect 仅负责 VPN 连接；真正使用算力要通过 SSH 登录服务器。
-2. 密码输入不回显是正常行为，不是键盘失灵。
-3. 未开 tmux 跑长任务风险高，断线可能导致任务中断。
-4. Baseline 的 task 文件是分任务写盘；task2 评估阶段崩溃时通常只会留下 task1 的 json。
-5. 4090 24GB 可跑 7B/9B，但微调需降低 batch 与序列长度以规避 OOM。
-6. Gemma 不支持 system role 时，需做模板兼容处理。
-7. 离线 BERTScore 需要本地 roberta-large 路径，并显式设置 BERTSCORE_NUM_LAYERS=17。
-8. 出现 Connection reset 多数是本地 SSH 断联，不等于远端 tmux 任务停止。
-9. 结果目录被 gitignore 忽略是正常现象，不能依赖 git 同步 results。
-10. 多人并行必须遵守三原则：不同 GPU、不同 tmux 会话、不同 output_dir。
+### 5.1 Baseline
+
+~~~bash
+python experiments/run_baseline.py --model qwen2.5-7b --task all --output_dir /home/hiteam/results_gangda
+~~~
+
+### 5.2 LoRA 微调
+
+~~~bash
+python finetune/lora_train.py --model qwen2.5-7b --output_dir /home/hiteam/checkpoints/qwen2.5-7b
+~~~
+
+### 5.3 微调后评估
+
+~~~bash
+python experiments/run_finetuned.py --model qwen2.5-7b --task all --lora_path /home/hiteam/checkpoints/qwen2.5-7b --output_dir /home/hiteam/results_gangda
+~~~
+
+### 5.4 RAG
+
+~~~bash
+# 若索引不存在，先建索引
+python rag/indexer.py
+
+# Base + RAG
+python experiments/run_rag.py --model qwen2.5-7b --task all --output_dir /home/hiteam/results_gangda
+
+# Fine-tuned + RAG
+python experiments/run_rag.py --model qwen2.5-7b --task all --lora_path /home/hiteam/checkpoints/qwen2.5-7b --output_dir /home/hiteam/results_gangda
+~~~
 
 ---
 
-## 10. 远程网络环境自检（不调用具体模型）
+## 6. 强烈建议：用 tmux 跑长任务
 
-目标：确认服务器出口 IP 是否为境外、关键域名是否可达。
+### 为什么要用 tmux
 
-### 10.1 查询公网出口 IP 与地理位置
+- 本地断网或关闭终端时，任务不会中断。
+- 可以随时离开，再回来继续看进度。
 
+### 基本操作
+
+~~~bash
+# 新建会话
+tmux new -s exp
+
+# 查看会话
+tmux ls
+
+# 回到会话
+tmux attach -t exp
+~~~
+
+退出但不终止任务：
+
+1. 按 Ctrl+b
+2. 再按 d
+
+---
+
+## 7. 多 GPU 并行模板
+
+原则：
+
+1. 不同任务绑定不同 GPU
+2. 不同任务使用不同 output_dir
+3. 不同任务使用不同 tmux 会话
+
+示例：
+
+~~~bash
+# 任务A用GPU1
+CUDA_VISIBLE_DEVICES=1 python experiments/run_baseline.py --model llama-3.1-8b --task all --output_dir /home/hiteam/results_llama
+
+# 任务B用GPU2
+CUDA_VISIBLE_DEVICES=2 python experiments/run_baseline.py --model gemma-2-9b --task all --output_dir /home/hiteam/results_gemma
+~~~
+
+监控 GPU：
+
+~~~bash
+watch -n 2 nvidia-smi
+~~~
+
+---
+
+## 8. 远程网络环境自检（不调用具体模型）
+
+目标：确认服务器出口 IP 是否为境外，以及关键域名是否可达。
+
+### 8.1 查询公网出口 IP 与地理位置
+
+~~~bash
 python - <<'PY'
 import json, urllib.request
 
@@ -216,31 +216,49 @@ print("Region:", info.get("region"))
 print("City:", info.get("city"))
 print("Org:", info.get("org"))
 PY
+~~~
 
-### 10.2 测试关键域名 HTTPS 连通（不带密钥）
+### 8.2 测试关键域名 HTTPS 连通（无需 API Key）
 
+~~~bash
 curl -I --max-time 15 https://huggingface.co
 curl -I --max-time 15 https://openrouter.ai/api/v1/models
 curl -I --max-time 15 https://api.openai.com/v1/models
 curl -I --max-time 15 https://api.anthropic.com/v1/messages
+~~~
 
-判定规则：
-1. 返回 200/301/302 说明可达。
-2. 返回 401/403 也说明可达（只是未授权）。
-3. 超时、无法解析域名、TLS 失败说明网络路径有问题。
+判定：
 
-### 10.3 建议每次开工前做一次快速检查
+1. 200/301/302：可达
+2. 401/403：也可达（只是没授权）
+3. 超时/域名解析失败/TLS失败：网络路径有问题
 
-python - <<'PY'
-import subprocess
+---
 
-targets = [
-	"https://huggingface.co",
-	"https://openrouter.ai/api/v1/models",
-]
+## 9. 每次开工的最短清单（30秒版）
 
-for t in targets:
-	cmd = ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code} %{time_total}\\n", "--max-time", "15", t]
-	r = subprocess.run(cmd, capture_output=True, text=True)
-	print(t, "->", (r.stdout or r.stderr).strip())
-PY
+~~~bash
+ssh hiteam@172.17.0.18
+source /opt/venvs/llm8307/bin/activate
+cd /home/hiteam/8307-project
+export PYTHONPATH=$(pwd):$PYTHONPATH
+nvidia-smi
+~~~
+
+确认无误后再运行实验命令。
+
+---
+
+## 10. 结果检查与收工动作
+
+### 结果检查
+
+~~~bash
+find /home/hiteam -type f -path "*/results*/*/*/*_metrics.json" | sort
+~~~
+
+### 收工前建议
+
+1. 确认所有任务 metrics 文件落盘。
+2. 记录当前 tmux 会话名称。
+3. 备份 logs、checkpoints、results。
