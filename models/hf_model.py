@@ -36,9 +36,35 @@ class HFModel(BaseModel):
                  max_tokens: int = 1024, temperature: float = 0.0) -> str:
         # use chat template if available
         if hasattr(self.tokenizer, "apply_chat_template"):
-            input_text = self.tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
-            )
+            try:
+                input_text = self.tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+            except Exception:
+                # Some templates (e.g., Gemma) don't support a separate system role.
+                system_msgs = [m["content"] for m in messages if m.get("role") == "system"]
+                non_system = [m for m in messages if m.get("role") != "system"]
+
+                if system_msgs:
+                    prefix = "System instructions:\n" + "\n".join(system_msgs)
+                    if non_system and non_system[0].get("role") == "user":
+                        non_system[0] = {
+                            "role": "user",
+                            "content": f"{prefix}\n\n{non_system[0].get('content', '')}",
+                        }
+                    else:
+                        non_system.insert(0, {"role": "user", "content": prefix})
+
+                try:
+                    input_text = self.tokenizer.apply_chat_template(
+                        non_system, tokenize=False, add_generation_prompt=True
+                    )
+                except Exception:
+                    parts = []
+                    for m in messages:
+                        parts.append(f"{m['role']}: {m['content']}")
+                    parts.append("assistant:")
+                    input_text = "\n".join(parts)
         else:
             # fallback: concatenate messages
             parts = []
