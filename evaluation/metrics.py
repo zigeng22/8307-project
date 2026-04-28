@@ -97,8 +97,15 @@ def eval_bertscore(predictions: List[str], references: List[str],
     model_type = resolve_local_bertscore_model()
     try:
         if model_type:
+            # Local path is not in bert-score's built-in model2layers map.
+            # roberta-large commonly uses 17 for BERTScore.
+            num_layers = int(os.environ.get("BERTSCORE_NUM_LAYERS", "17"))
             P, R, F1 = bert_score_fn(
-                predictions, references, model_type=model_type, verbose=False
+                predictions,
+                references,
+                model_type=model_type,
+                num_layers=num_layers,
+                verbose=False,
             )
         else:
             P, R, F1 = bert_score_fn(
