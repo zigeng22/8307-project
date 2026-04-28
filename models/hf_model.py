@@ -85,6 +85,13 @@ class HFModel(BaseModel):
         }
         if temperature > 0:
             gen_kwargs["temperature"] = temperature
+            # Keep sampling configuration explicit when sampling is enabled.
+            gen_kwargs["top_p"] = 0.9
+        else:
+            # Some instruct checkpoints ship generation_config with temperature/top_p.
+            # Set deterministic-compatible values to avoid per-step warning spam.
+            gen_kwargs["temperature"] = 1.0
+            gen_kwargs["top_p"] = 1.0
 
         with torch.no_grad():
             output_ids = self.model.generate(**inputs, **gen_kwargs)
