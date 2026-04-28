@@ -9,6 +9,7 @@ Usage:
 import argparse
 import json
 import sys
+import math
 from pathlib import Path
 from tqdm import tqdm
 
@@ -26,6 +27,15 @@ from prompts.templates import (
 )
 from evaluation.metrics import eval_task
 from rag.retriever import retrieve
+
+
+def _safe_text(value) -> str:
+    """Convert potentially-null values to clean strings."""
+    if value is None:
+        return ""
+    if isinstance(value, float) and math.isnan(value):
+        return ""
+    return str(value).strip()
 
 
 def get_model(model_name: str, lora_path: str = None):
@@ -49,8 +59,9 @@ def get_model(model_name: str, lora_path: str = None):
 def run_task1_rag(model, test_df):
     predictions = []
     for _, row in tqdm(test_df.iterrows(), total=len(test_df), desc="Task1+RAG"):
-        context = retrieve(row["text"])
-        msgs = build_task1_messages(row["text"], rag_context=context)
+        text = _safe_text(row["text"])
+        context = retrieve(text)
+        msgs = build_task1_messages(text, rag_context=context)
         pred = model.generate(msgs, max_tokens=50)
         predictions.append(pred)
     results = eval_task("task1", predictions, test_df["label"].tolist(),
@@ -62,8 +73,9 @@ def run_task1_rag(model, test_df):
 def run_task2_rag(model, test_df):
     predictions = []
     for _, row in tqdm(test_df.iterrows(), total=len(test_df), desc="Task2+RAG"):
-        context = retrieve(row["input"])
-        msgs = build_task2_messages(row["input"], rag_context=context)
+        patient_input = _safe_text(row["input"])
+        context = retrieve(patient_input)
+        msgs = build_task2_messages(patient_input, rag_context=context)
         pred = model.generate(msgs, max_tokens=512)
         predictions.append(pred)
     references = test_df["output"].tolist()
@@ -75,8 +87,9 @@ def run_task2_rag(model, test_df):
 def run_task3_rag(model, test_df):
     predictions = []
     for _, row in tqdm(test_df.iterrows(), total=len(test_df), desc="Task3+RAG"):
-        context = retrieve(row["question"])
-        msgs = build_task3_messages(row["question"], rag_context=context)
+        question = _safe_text(row["question"])
+        context = retrieve(question)
+        msgs = build_task3_messages(question, rag_context=context)
         pred = model.generate(msgs, max_tokens=512)
         predictions.append(pred)
     references = test_df["answer"].tolist()

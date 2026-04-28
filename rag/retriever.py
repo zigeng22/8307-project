@@ -2,6 +2,7 @@
 RAG retriever: load FAISS index and retrieve relevant context.
 """
 import sys
+import math
 from pathlib import Path
 from typing import List
 
@@ -11,6 +12,15 @@ from config import RAG_CONFIG
 
 
 _vectorstore = None
+
+
+def _safe_text(value) -> str:
+    """Convert arbitrary input to safe string for embedding query."""
+    if value is None:
+        return ""
+    if isinstance(value, float) and math.isnan(value):
+        return ""
+    return str(value).strip()
 
 
 def get_vectorstore():
@@ -33,6 +43,9 @@ def get_vectorstore():
 def retrieve(query: str, top_k: int = None) -> str:
     """Retrieve top-k relevant passages and return as a single string."""
     k = top_k or RAG_CONFIG["top_k"]
+    query = _safe_text(query)
+    if not query:
+        return ""
     vs = get_vectorstore()
     docs = vs.similarity_search(query, k=k)
     passages = [doc.page_content for doc in docs]
