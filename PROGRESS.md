@@ -1,7 +1,7 @@
 # 项目进度追踪文档
 
 > 项目名称：Enhancing LLM Performance on Mental Health Tasks via Fine-tuning and RAG
-> 最后更新：2026-04-28
+> 最后更新：2026-04-29
 > 维护人：wtc
 
 ---
@@ -20,9 +20,9 @@
 | 阶段 | 内容 | 状态 | 备注 |
 |------|------|------|------|
 | Phase 0 | 框架搭建 + 环境验证 | ✅ 已完成 | 代码结构与评估流水线稳定 |
-| Phase 1 | Baseline | ⏳ 进行中 | DeepSeek、Qwen 已完成；Llama/Gemma 正在补跑 |
-| Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成，评估进行中 |
-| Phase 3 | RAG 实验 | 🔲 未全面开始 | 索引与脚本已可用 |
+| Phase 1 | Baseline | ⏳ 进行中 | DeepSeek/Qwen 已完成；Llama 缺 task2；Gemma 缺 task2/task3 |
+| Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成；Fine-tuned task1/task2 已完成 |
+| Phase 3 | RAG 实验 | ⏳ 进行中 | Qwen Base+RAG task1 已完成，其他持续补齐 |
 | Phase 4 | 汇总分析与报告 | 🔲 未开始 | 待实验结果齐全后执行 |
 
 ---
@@ -37,9 +37,12 @@
 2. Baseline
 - DeepSeek V3：Task1/2/3 已完成。
 - Qwen2.5-7B：Task1/2/3 已完成。
+- Llama-3.1-8B：Task1/3 已完成（Task2 补跑中）。
+- Gemma-2-9B：Task1 已完成（Task2/3 补跑中）。
 
 3. 微调
 - Qwen2.5-7B LoRA 训练已完成。
+- Qwen2.5-7B Fine-tuned：Task1/2 已完成（Task3 待补）。
 - 训练统计：
   - train_runtime: 9619.138 s
   - train_steps: 2922
@@ -47,17 +50,31 @@
   - train_loss: 0.8047
   - checkpoint: /home/hiteam/checkpoints/qwen2.5-7b
 
+4. RAG
+- Qwen2.5-7B Base+RAG：Task1 已完成（Task2/3 待补）。
+
 ---
 
 ## 四、当前进行中
 
 1. Qwen 评估
-- Qwen Fine-tuned 评估（Task1/2/3）正在运行。
-- Qwen Base+RAG 已启动并行运行。
+- Qwen Fine-tuned：正在补 task3。
+- Qwen Base+RAG：正在补 task2/task3。
 
 2. Llama 与 Gemma Baseline 补齐
-- Llama：Task1 已完成，Task2 曾在 BERTScore 阶段因离线 roberta-large 路径问题中断，已提供修复方案后补跑。
-- Gemma：曾出现 chat template 不支持 system role 的兼容问题，已修复后继续运行。
+- Llama：当前只缺 Baseline task2。
+- Gemma：当前缺 Baseline task2 与 task3。
+
+### 4.1 当前结果快照（来自 experiment_table.csv）
+
+| 模型 | 配置 | Task1 | Task2 | Task3 |
+|------|------|-------|-------|-------|
+| DeepSeek V3 | Base | ✅ | ✅ | ✅ |
+| Qwen2.5-7B | Base | ✅ | ✅ | ✅ |
+| Qwen2.5-7B | Fine-tuned | ✅ | ✅ | ⏳ |
+| Qwen2.5-7B | Base+RAG | ✅ | ⏳ | ⏳ |
+| Llama-3.1-8B | Base | ✅ | ⏳ | ✅ |
+| Gemma-2-9B | Base | ✅ | ⏳ | ⏳ |
 
 ---
 
