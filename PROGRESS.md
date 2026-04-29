@@ -20,7 +20,7 @@
 | 阶段 | 内容 | 状态 | 备注 |
 |------|------|------|------|
 | Phase 0 | 框架搭建 + 环境验证 | ✅ 已完成 | 代码结构与评估流水线稳定 |
-| Phase 1 | Baseline | ⏳ 进行中 | DeepSeek/Qwen 已完成；Llama 已补齐；Gemma 缺 task2；Mistral 已完成 task3（task1/2待跑） |
+| Phase 1 | Baseline | ⏳ 进行中 | DeepSeek/Qwen/Llama/Gemma 已补齐；Mistral 已完成 task3（task1/2待跑） |
 | Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成；Fine-tuned task1/task2/task3 已完成 |
 | Phase 3 | RAG 实验 | ⏳ 进行中 | Qwen Base+RAG task1/task2 已完成，task3 待补 |
 | Phase 4 | 汇总分析与报告 | 🔲 未开始 | 待实验结果齐全后执行 |
@@ -38,7 +38,7 @@
 - DeepSeek V3：Task1/2/3 已完成。
 - Qwen2.5-7B：Task1/2/3 已完成。
 - Llama-3.1-8B：Task1/2/3 已完成。
-- Gemma-2-9B：Task1/3 已完成（Task2 补跑中）。
+- Gemma-2-9B：Task1/2/3 已完成。
 - Mistral Large：Task3 已完成（Task1/2 待跑）。
 
 3. 微调
@@ -62,9 +62,9 @@
 - Qwen Fine-tuned：三任务已补齐，待汇总对比。
 - Qwen Base+RAG：正在补 task3。
 
-2. Llama 与 Gemma Baseline 补齐
+2. Baseline 补齐
 - Llama：Baseline 三任务已补齐。
-- Gemma：当前只缺 Baseline task2。
+- Gemma：Baseline 三任务已补齐。
 
 3. Mistral Baseline 补齐
 - Mistral：当前已完成 task3，待补 task1/task2。
@@ -79,7 +79,7 @@
 | Qwen2.5-7B | Fine-tuned | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Base+RAG | ✅ | ✅ | ⏳ |
 | Llama-3.1-8B | Base | ✅ | ✅ | ✅ |
-| Gemma-2-9B | Base | ✅ | ⏳ | ✅ |
+| Gemma-2-9B | Base | ✅ | ✅ | ✅ |
 
 ---
 
@@ -90,18 +90,18 @@
 | GPU | 任务 | 目标输出目录 |
 |-----|------|--------------|
 | GPU0 | Qwen Base+RAG task3 | /home/hiteam/results_gangda |
-| GPU1 | Gemma Baseline task2 | /home/hiteam/results_gemma |
-| GPU2 | Qwen Fine-tuned+RAG task1/2/3 | /home/hiteam/results_gangda |
+| GPU1 | Qwen Fine-tuned+RAG task1/2/3 | /home/hiteam/results_gangda |
+| GPU2 | Llama LoRA 微调 | /home/hiteam/checkpoints |
 
 ### 5.2 待前置完成后再启动
 
 | GPU | 任务 | 前置条件 | 目标输出目录 |
 |-----|------|----------|--------------|
-| GPU3 | Llama LoRA 微调 | Llama Baseline 已完成（满足） | /home/hiteam/checkpoints |
+| GPU3 | Llama Fine-tuned 评估 | Llama LoRA 完成后 | /home/hiteam/results_llama |
 | GPU4 | Llama Fine-tuned 评估 | Llama LoRA 完成后 | /home/hiteam/results_llama |
 | GPU5 | Llama Base+RAG | 无 | /home/hiteam/results_llama |
-| GPU6 | Gemma LoRA 微调 | Gemma Baseline task2 补齐后 | /home/hiteam/checkpoints |
-| GPU7 | Gemma Base+RAG | Gemma Baseline task2 补齐后更稳妥 | /home/hiteam/results_gemma |
+| GPU6 | Gemma LoRA 微调 | Gemma Baseline 已完成（满足） | /home/hiteam/checkpoints |
+| GPU7 | Gemma Base+RAG | 无 | /home/hiteam/results_gemma |
 
 说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进；Mistral 当前优先补 Baseline task1/task2。
 
@@ -146,10 +146,10 @@
 ## 七、下一步计划（按优先级）
 
 1. 补齐 Qwen Base+RAG task3 并核验三任务指标文件。
-2. 补齐 Gemma Baseline task2。
-3. 补齐 Mistral Baseline task1/task2（task3 已完成）。
-4. 启动 Llama LoRA -> Llama Fine-tuned -> Llama Fine-tuned+RAG。
-5. 启动 Gemma LoRA -> Gemma Fine-tuned -> Gemma Fine-tuned+RAG。
+2. 补齐 Mistral Baseline task1/task2（task3 已完成）。
+3. 启动 Llama LoRA -> Llama Fine-tuned -> Llama Fine-tuned+RAG。
+4. 启动 Gemma LoRA -> Gemma Fine-tuned -> Gemma Fine-tuned+RAG。
+5. 启动 DeepSeek/Mistral Base+RAG。
 6. 同步远程结果并更新 experiment_table.csv 与报告表格。
 
 ---
