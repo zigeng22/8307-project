@@ -25,6 +25,7 @@ def sync_remote_results(project_root: Path, user: str, host: str):
         "/home/hiteam/results_llama",
         "/home/hiteam/results_gemma",
         "/home/hiteam/results_mistral",
+        "/home/hiteam/results_deepseek",
     ]
 
     for remote in remote_dirs:

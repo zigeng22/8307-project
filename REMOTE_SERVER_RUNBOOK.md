@@ -226,6 +226,7 @@ scp -r hiteam@172.17.0.18:/home/hiteam/results_gangda "C:\Users\Lenovo\Dropbox\8
 scp -r hiteam@172.17.0.18:/home/hiteam/results_llama "C:\Users\Lenovo\Dropbox\8307\wtc\results_server\"
 scp -r hiteam@172.17.0.18:/home/hiteam/results_gemma "C:\Users\Lenovo\Dropbox\8307\wtc\results_server\"
 scp -r hiteam@172.17.0.18:/home/hiteam/results_mistral "C:\Users\Lenovo\Dropbox\8307\wtc\results_server\"
+scp -r hiteam@172.17.0.18:/home/hiteam/results_deepseek "C:\Users\Lenovo\Dropbox\8307\wtc\results_server\"
 ```
 
 同步后，本地实验表填数统一从以下目录读取：
