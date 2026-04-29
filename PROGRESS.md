@@ -98,10 +98,10 @@
 | GPU | 任务 | 前置条件 | 目标输出目录 |
 |-----|------|----------|--------------|
 | GPU3 | Llama Fine-tuned 评估 | Llama LoRA 完成后 | /home/hiteam/results_llama |
-| GPU4 | Llama Fine-tuned 评估 | Llama LoRA 完成后 | /home/hiteam/results_llama |
+| GPU4 | Llama Fine-tuned+RAG | Llama Fine-tuned 三任务完成后 | /home/hiteam/results_llama |
 | GPU5 | Llama Base+RAG | 无 | /home/hiteam/results_llama |
 | GPU6 | Gemma LoRA 微调 | Gemma Baseline 已完成（满足） | /home/hiteam/checkpoints |
-| GPU7 | Gemma Base+RAG | 无 | /home/hiteam/results_gemma |
+| GPU7 | Gemma Fine-tuned 评估（后续接 Fine-tuned+RAG） | Gemma LoRA 完成后 | /home/hiteam/results_gemma |
 
 说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进；Mistral 当前优先补 Baseline task1/task2。
 

@@ -281,11 +281,11 @@ exit
 # GPU0: Qwen Base+RAG task3
 CUDA_VISIBLE_DEVICES=0 /opt/venvs/llm8307/bin/python experiments/run_rag.py --model qwen2.5-7b --task task3 --output_dir /home/hiteam/results_gangda
 
-# GPU1: Gemma Baseline task2
-CUDA_VISIBLE_DEVICES=1 /opt/venvs/llm8307/bin/python experiments/run_baseline.py --model gemma-2-9b --task task2 --output_dir /home/hiteam/results_gemma
+# GPU1: Qwen Fine-tuned+RAG all
+CUDA_VISIBLE_DEVICES=1 /opt/venvs/llm8307/bin/python experiments/run_rag.py --model qwen2.5-7b --task all --lora_path /home/hiteam/checkpoints/qwen2.5-7b --output_dir /home/hiteam/results_gangda
 
-# GPU2: Qwen Fine-tuned+RAG all
-CUDA_VISIBLE_DEVICES=2 /opt/venvs/llm8307/bin/python experiments/run_rag.py --model qwen2.5-7b --task all --lora_path /home/hiteam/checkpoints/qwen2.5-7b --output_dir /home/hiteam/results_gangda
+# GPU2: Llama LoRA
+CUDA_VISIBLE_DEVICES=2 /opt/venvs/llm8307/bin/python finetune/lora_train.py --model llama-3.1-8b --output_dir /home/hiteam/checkpoints/llama-3.1-8b
 ```
 
 ### 11.2 API 任务（不占本地 GPU，可并行）
@@ -301,8 +301,8 @@ CUDA_VISIBLE_DEVICES=2 /opt/venvs/llm8307/bin/python experiments/run_rag.py --mo
 ### 11.3 第二批（待前置完成）
 
 ```bash
-# GPU3: Llama LoRA
-CUDA_VISIBLE_DEVICES=3 /opt/venvs/llm8307/bin/python finetune/lora_train.py --model llama-3.1-8b --output_dir /home/hiteam/checkpoints/llama-3.1-8b
+# GPU3: Gemma LoRA
+CUDA_VISIBLE_DEVICES=3 /opt/venvs/llm8307/bin/python finetune/lora_train.py --model gemma-2-9b --output_dir /home/hiteam/checkpoints/gemma-2-9b
 
 # GPU4: Llama Fine-tuned all
 CUDA_VISIBLE_DEVICES=4 /opt/venvs/llm8307/bin/python experiments/run_finetuned.py --model llama-3.1-8b --task all --lora_path /home/hiteam/checkpoints/llama-3.1-8b --output_dir /home/hiteam/results_llama
@@ -310,9 +310,9 @@ CUDA_VISIBLE_DEVICES=4 /opt/venvs/llm8307/bin/python experiments/run_finetuned.p
 # GPU5: Llama Base+RAG all
 CUDA_VISIBLE_DEVICES=5 /opt/venvs/llm8307/bin/python experiments/run_rag.py --model llama-3.1-8b --task all --output_dir /home/hiteam/results_llama
 
-# GPU6: Gemma LoRA（Gemma task2 补齐后再开）
-CUDA_VISIBLE_DEVICES=6 /opt/venvs/llm8307/bin/python finetune/lora_train.py --model gemma-2-9b --output_dir /home/hiteam/checkpoints/gemma-2-9b
+# GPU6: Gemma Fine-tuned all
+CUDA_VISIBLE_DEVICES=6 /opt/venvs/llm8307/bin/python experiments/run_finetuned.py --model gemma-2-9b --task all --lora_path /home/hiteam/checkpoints/gemma-2-9b --output_dir /home/hiteam/results_gemma
 
-# GPU7: Gemma Base+RAG all（Gemma task2 补齐后再开）
+# GPU7: Gemma Base+RAG all
 CUDA_VISIBLE_DEVICES=7 /opt/venvs/llm8307/bin/python experiments/run_rag.py --model gemma-2-9b --task all --output_dir /home/hiteam/results_gemma
 ```
