@@ -292,11 +292,11 @@ CUDA_VISIBLE_DEVICES=2 /opt/venvs/llm8307/bin/python finetune/lora_train.py --mo
 ### 11.2 API 任务（不占本地 GPU，可并行）
 
 ```bash
-# Mistral Baseline task1
-/opt/venvs/llm8307/bin/python experiments/run_baseline.py --model mistral-large --task task1 --output_dir /home/hiteam/results_mistral
+# DeepSeek Base+RAG all
+/opt/venvs/llm8307/bin/python experiments/run_rag.py --model deepseek-v3 --task all --output_dir /home/hiteam/results_deepseek
 
-# Mistral Baseline task2
-/opt/venvs/llm8307/bin/python experiments/run_baseline.py --model mistral-large --task task2 --output_dir /home/hiteam/results_mistral
+# Mistral Base+RAG all
+/opt/venvs/llm8307/bin/python experiments/run_rag.py --model mistral-large --task all --output_dir /home/hiteam/results_mistral
 ```
 
 ### 11.3 第二批（待前置完成）

@@ -20,7 +20,7 @@
 | 阶段 | 内容 | 状态 | 备注 |
 |------|------|------|------|
 | Phase 0 | 框架搭建 + 环境验证 | ✅ 已完成 | 代码结构与评估流水线稳定 |
-| Phase 1 | Baseline | ⏳ 进行中 | DeepSeek/Qwen/Llama/Gemma 已补齐；Mistral 已完成 task3（task1/2待跑） |
+| Phase 1 | Baseline | ✅ 已完成 | DeepSeek/Qwen/Llama/Gemma/Mistral 五模型 Base 三任务已补齐 |
 | Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成；Fine-tuned task1/task2/task3 已完成 |
 | Phase 3 | RAG 实验 | ⏳ 进行中 | Qwen Base+RAG task1/task2 已完成，task3 待补 |
 | Phase 4 | 汇总分析与报告 | 🔲 未开始 | 待实验结果齐全后执行 |
@@ -39,7 +39,7 @@
 - Qwen2.5-7B：Task1/2/3 已完成。
 - Llama-3.1-8B：Task1/2/3 已完成。
 - Gemma-2-9B：Task1/2/3 已完成。
-- Mistral Large：Task3 已完成（Task1/2 待跑）。
+- Mistral Large：Task1/2/3 已完成。
 
 3. 微调
 - Qwen2.5-7B LoRA 训练已完成。
@@ -62,19 +62,20 @@
 - Qwen Fine-tuned：三任务已补齐，待汇总对比。
 - Qwen Base+RAG：正在补 task3。
 
-2. Baseline 补齐
+2. Baseline 阶段
 - Llama：Baseline 三任务已补齐。
 - Gemma：Baseline 三任务已补齐。
 
-3. Mistral Baseline 补齐
-- Mistral：当前已完成 task3，待补 task1/task2。
+3. API 线 RAG 推进
+- Mistral：下一步推进 Base+RAG。
+- DeepSeek：下一步推进 Base+RAG。
 
 ### 4.1 当前结果快照（来自 experiment_table.csv）
 
 | 模型 | 配置 | Task1 | Task2 | Task3 |
 |------|------|-------|-------|-------|
 | DeepSeek V3 | Base | ✅ | ✅ | ✅ |
-| Mistral Large | Base | ⏳ | ⏳ | ✅ |
+| Mistral Large | Base | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Base | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Fine-tuned | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Base+RAG | ✅ | ✅ | ⏳ |
@@ -103,7 +104,7 @@
 | GPU6 | Gemma LoRA 微调 | Gemma Baseline 已完成（满足） | /home/hiteam/checkpoints |
 | GPU7 | Gemma Fine-tuned 评估（后续接 Fine-tuned+RAG） | Gemma LoRA 完成后 | /home/hiteam/results_gemma |
 
-说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进；Mistral 当前优先补 Baseline task1/task2。
+说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进；当前 API 线重点是 Base+RAG。
 
 ---
 
@@ -146,11 +147,10 @@
 ## 七、下一步计划（按优先级）
 
 1. 补齐 Qwen Base+RAG task3 并核验三任务指标文件。
-2. 补齐 Mistral Baseline task1/task2（task3 已完成）。
-3. 启动 Llama LoRA -> Llama Fine-tuned -> Llama Fine-tuned+RAG。
-4. 启动 Gemma LoRA -> Gemma Fine-tuned -> Gemma Fine-tuned+RAG。
-5. 启动 DeepSeek/Mistral Base+RAG。
-6. 同步远程结果并更新 experiment_table.csv 与报告表格。
+2. 启动 Llama LoRA -> Llama Fine-tuned -> Llama Fine-tuned+RAG。
+3. 启动 Gemma LoRA -> Gemma Fine-tuned -> Gemma Fine-tuned+RAG。
+4. 启动 DeepSeek/Mistral Base+RAG。
+5. 同步远程结果并更新 experiment_table.csv 与报告表格。
 
 ---
 
