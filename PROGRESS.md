@@ -20,9 +20,9 @@
 | 阶段 | 内容 | 状态 | 备注 |
 |------|------|------|------|
 | Phase 0 | 框架搭建 + 环境验证 | ✅ 已完成 | 代码结构与评估流水线稳定 |
-| Phase 1 | Baseline | ⏳ 进行中 | DeepSeek/Qwen 已完成；Llama 缺 task2；Gemma 缺 task2/task3 |
-| Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成；Fine-tuned task1/task2 已完成 |
-| Phase 3 | RAG 实验 | ⏳ 进行中 | Qwen Base+RAG task1 已完成，其他持续补齐 |
+| Phase 1 | Baseline | ⏳ 进行中 | DeepSeek/Qwen 已完成；Llama 已补齐；Gemma 缺 task2；Mistral 已完成 task3（task1/2待跑） |
+| Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成；Fine-tuned task1/task2/task3 已完成 |
+| Phase 3 | RAG 实验 | ⏳ 进行中 | Qwen Base+RAG task1/task2 已完成，task3 待补 |
 | Phase 4 | 汇总分析与报告 | 🔲 未开始 | 待实验结果齐全后执行 |
 
 ---
@@ -37,12 +37,13 @@
 2. Baseline
 - DeepSeek V3：Task1/2/3 已完成。
 - Qwen2.5-7B：Task1/2/3 已完成。
-- Llama-3.1-8B：Task1/3 已完成（Task2 补跑中）。
-- Gemma-2-9B：Task1 已完成（Task2/3 补跑中）。
+- Llama-3.1-8B：Task1/2/3 已完成。
+- Gemma-2-9B：Task1/3 已完成（Task2 补跑中）。
+- Mistral Large：Task3 已完成（Task1/2 待跑）。
 
 3. 微调
 - Qwen2.5-7B LoRA 训练已完成。
-- Qwen2.5-7B Fine-tuned：Task1/2 已完成（Task3 待补）。
+- Qwen2.5-7B Fine-tuned：Task1/2/3 已完成。
 - 训练统计：
   - train_runtime: 9619.138 s
   - train_steps: 2922
@@ -51,54 +52,58 @@
   - checkpoint: /home/hiteam/checkpoints/qwen2.5-7b
 
 4. RAG
-- Qwen2.5-7B Base+RAG：Task1 已完成（Task2/3 待补）。
+- Qwen2.5-7B Base+RAG：Task1/2 已完成（Task3 待补）。
 
 ---
 
 ## 四、当前进行中
 
 1. Qwen 评估
-- Qwen Fine-tuned：正在补 task3。
-- Qwen Base+RAG：正在补 task2/task3。
+- Qwen Fine-tuned：三任务已补齐，待汇总对比。
+- Qwen Base+RAG：正在补 task3。
 
 2. Llama 与 Gemma Baseline 补齐
-- Llama：当前只缺 Baseline task2。
-- Gemma：当前缺 Baseline task2 与 task3。
+- Llama：Baseline 三任务已补齐。
+- Gemma：当前只缺 Baseline task2。
+
+3. Mistral Baseline 补齐
+- Mistral：当前已完成 task3，待补 task1/task2。
 
 ### 4.1 当前结果快照（来自 experiment_table.csv）
 
 | 模型 | 配置 | Task1 | Task2 | Task3 |
 |------|------|-------|-------|-------|
 | DeepSeek V3 | Base | ✅ | ✅ | ✅ |
+| Mistral Large | Base | ⏳ | ⏳ | ✅ |
 | Qwen2.5-7B | Base | ✅ | ✅ | ✅ |
-| Qwen2.5-7B | Fine-tuned | ✅ | ✅ | ⏳ |
-| Qwen2.5-7B | Base+RAG | ✅ | ⏳ | ⏳ |
-| Llama-3.1-8B | Base | ✅ | ⏳ | ✅ |
-| Gemma-2-9B | Base | ✅ | ⏳ | ⏳ |
+| Qwen2.5-7B | Fine-tuned | ✅ | ✅ | ✅ |
+| Qwen2.5-7B | Base+RAG | ✅ | ✅ | ⏳ |
+| Llama-3.1-8B | Base | ✅ | ✅ | ✅ |
+| Gemma-2-9B | Base | ✅ | ⏳ | ✅ |
 
 ---
 
-## 五、当前 GPU 使用与并行计划（8 卡）
+## 五、下一阶段 GPU 排班建议（8 卡）
 
-### 5.1 当前已占用（约 3/8）
+### 5.1 立刻可开跑（不等前置）
 
-| GPU | 当前任务 | 状态 |
-|-----|----------|------|
-| GPU0 | Qwen Fine-tuned 评估 / 后续 Qwen FT+RAG | 进行中 |
-| GPU1 | Llama Baseline 补跑 | 进行中 |
-| GPU2 | Gemma Baseline 补跑 | 进行中 |
+| GPU | 任务 | 目标输出目录 |
+|-----|------|--------------|
+| GPU0 | Qwen Base+RAG task3 | /home/hiteam/results_gangda |
+| GPU1 | Gemma Baseline task2 | /home/hiteam/results_gemma |
+| GPU2 | Qwen Fine-tuned+RAG task1/2/3 | /home/hiteam/results_gangda |
 
-### 5.2 其余 5 张卡可并行任务建议
+### 5.2 待前置完成后再启动
 
-| GPU | 建议任务 | 前置条件 | 备注 |
-|-----|----------|----------|------|
-| GPU3 | Llama LoRA 微调 | Llama Baseline 三任务补齐 | 重任务，单独占卡 |
-| GPU4 | Gemma LoRA 微调 | Gemma Baseline 三任务补齐 | 重任务，单独占卡 |
-| GPU5 | Qwen Fine-tuned + RAG | Qwen Fine-tuned task3 完成 | 可尽快启动 |
-| GPU6 | Llama Base + RAG | Llama Baseline 补齐 | 与微调线并行 |
-| GPU7 | Gemma Base + RAG | Gemma Baseline 补齐 | 与微调线并行 |
+| GPU | 任务 | 前置条件 | 目标输出目录 |
+|-----|------|----------|--------------|
+| GPU3 | Llama LoRA 微调 | Llama Baseline 已完成（满足） | /home/hiteam/checkpoints |
+| GPU4 | Llama Fine-tuned 评估 | Llama LoRA 完成后 | /home/hiteam/results_llama |
+| GPU5 | Llama Base+RAG | 无 | /home/hiteam/results_llama |
+| GPU6 | Gemma LoRA 微调 | Gemma Baseline task2 补齐后 | /home/hiteam/checkpoints |
+| GPU7 | Gemma Base+RAG | Gemma Baseline task2 补齐后更稳妥 | /home/hiteam/results_gemma |
 
-说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进。
+说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进；Mistral 当前优先补 Baseline task1/task2。
 
 ---
 
@@ -131,16 +136,21 @@
 - api.anthropic.com：可达但 403
 - 执行策略：开源模型离线本地权重；API 优先走 OpenRouter。
 
+8. 结果同步脚本修复（2026-04-29）
+- 已修复 `tools/sync_and_summarize_results.py` 的 scp 交互问题。
+- 旧版本因 `capture_output` 导致 scp 交互密码失败并报 `Connection closed`。
+- 新版本可在终端正常输入 SSH 密码完成三目录同步。
+
 ---
 
 ## 七、下一步计划（按优先级）
 
-1. 完成 Qwen Fine-tuned 评估结果落盘并核验三任务指标文件。
-2. 补齐 Llama Baseline 三任务结果。
-3. 补齐 Gemma Baseline 三任务结果。
-4. 启动 Qwen Fine-tuned + RAG。
-5. 按同样流程推进 Llama/Gemma 的 Fine-tuned 与 RAG。
-6. 汇总 48 个实验点并进入 Phase 4 分析与报告。
+1. 补齐 Qwen Base+RAG task3 并核验三任务指标文件。
+2. 补齐 Gemma Baseline task2。
+3. 补齐 Mistral Baseline task1/task2（task3 已完成）。
+4. 启动 Llama LoRA -> Llama Fine-tuned -> Llama Fine-tuned+RAG。
+5. 启动 Gemma LoRA -> Gemma Fine-tuned -> Gemma Fine-tuned+RAG。
+6. 同步远程结果并更新 experiment_table.csv 与报告表格。
 
 ---
 

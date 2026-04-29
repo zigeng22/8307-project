@@ -7,7 +7,11 @@ from pathlib import Path
 CONFIG_NAMES = {"baseline", "finetuned", "base_rag", "finetuned_rag"}
 
 
-def run_cmd(cmd):
+def run_cmd(cmd, interactive=False):
+    if interactive:
+        result = subprocess.run(cmd)
+        return result.returncode, "", ""
+
     result = subprocess.run(cmd, capture_output=True, text=True)
     return result.returncode, result.stdout, result.stderr
 
@@ -24,9 +28,9 @@ def sync_remote_results(project_root: Path, user: str, host: str):
 
     for remote in remote_dirs:
         cmd = ["scp", "-r", f"{user}@{host}:{remote}", str(dst)]
-        code, out, err = run_cmd(cmd)
+        code, out, err = run_cmd(cmd, interactive=True)
         if code != 0:
-            print(f"[WARN] sync failed: {remote}\n{err.strip()}")
+            print(f"[WARN] sync failed: {remote}")
         else:
             print(f"[OK] synced: {remote}")
 
