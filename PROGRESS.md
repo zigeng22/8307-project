@@ -1,7 +1,7 @@
 # 项目进度追踪文档
 
 > 项目名称：Enhancing LLM Performance on Mental Health Tasks via Fine-tuning and RAG
-> 最后更新：2026-04-29
+> 最后更新：2026-04-30
 > 维护人：wtc
 
 ---
@@ -21,8 +21,8 @@
 |------|------|------|------|
 | Phase 0 | 框架搭建 + 环境验证 | ✅ 已完成 | 代码结构与评估流水线稳定 |
 | Phase 1 | Baseline | ✅ 已完成 | DeepSeek/Qwen/Llama/Gemma/Mistral 五模型 Base 三任务已补齐 |
-| Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成；Fine-tuned task1/task2/task3 已完成 |
-| Phase 3 | RAG 实验 | ⏳ 进行中 | Qwen Base+RAG task1/task2 已完成，task3 待补 |
+| Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成并评估完毕；Llama LoRA 已完成；Gemma LoRA 受显存限制待切换方案 |
+| Phase 3 | RAG 实验 | ⏳ 进行中 | Qwen Base+RAG 三任务已完成；Llama Base+RAG 三任务已完成；其余持续补齐 |
 | Phase 4 | 汇总分析与报告 | 🔲 未开始 | 待实验结果齐全后执行 |
 
 ---
@@ -44,6 +44,7 @@
 3. 微调
 - Qwen2.5-7B LoRA 训练已完成。
 - Qwen2.5-7B Fine-tuned：Task1/2/3 已完成。
+- Llama-3.1-8B LoRA 训练已完成（待跑 Fine-tuned / Fine-tuned+RAG）。
 - 训练统计：
   - train_runtime: 9619.138 s
   - train_steps: 2922
@@ -52,15 +53,16 @@
   - checkpoint: /home/hiteam/checkpoints/qwen2.5-7b
 
 4. RAG
-- Qwen2.5-7B Base+RAG：Task1/2 已完成（Task3 待补）。
+- Qwen2.5-7B Base+RAG：Task1/2/3 已完成。
+- Llama-3.1-8B Base+RAG：Task1/2/3 已完成。
 
 ---
 
 ## 四、当前进行中
 
 1. Qwen 评估
-- Qwen Fine-tuned：三任务已补齐，待汇总对比。
-- Qwen Base+RAG：正在补 task3。
+- Qwen Fine-tuned：三任务已补齐。
+- Qwen Base+RAG：三任务已补齐。
 
 2. Baseline 阶段
 - Llama：Baseline 三任务已补齐。
@@ -70,6 +72,9 @@
 - Mistral：下一步推进 Base+RAG。
 - DeepSeek：下一步推进 Base+RAG。
 
+4. Gemma 微调线
+- Gemma LoRA：当前在 4090 24GB 上持续 OOM，正在采用更保守参数/替代方案（QLoRA 或降配）推进。
+
 ### 4.1 当前结果快照（来自 experiment_table.csv）
 
 | 模型 | 配置 | Task1 | Task2 | Task3 |
@@ -78,8 +83,9 @@
 | Mistral Large | Base | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Base | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Fine-tuned | ✅ | ✅ | ✅ |
-| Qwen2.5-7B | Base+RAG | ✅ | ✅ | ⏳ |
+| Qwen2.5-7B | Base+RAG | ✅ | ✅ | ✅ |
 | Llama-3.1-8B | Base | ✅ | ✅ | ✅ |
+| Llama-3.1-8B | Base+RAG | ✅ | ✅ | ✅ |
 | Gemma-2-9B | Base | ✅ | ✅ | ✅ |
 
 ---
@@ -90,19 +96,19 @@
 
 | GPU | 任务 | 目标输出目录 |
 |-----|------|--------------|
-| GPU0 | Qwen Base+RAG task3 | /home/hiteam/results_gangda |
-| GPU1 | Qwen Fine-tuned+RAG task1/2/3 | /home/hiteam/results_gangda |
-| GPU2 | Llama LoRA 微调 | /home/hiteam/checkpoints |
+| GPU0 | Qwen Fine-tuned+RAG task1/2/3 | /home/hiteam/results_gangda |
+| GPU1 | Llama Fine-tuned 评估 | /home/hiteam/results_llama |
+| GPU2 | Llama Fine-tuned+RAG | /home/hiteam/results_llama |
 
 ### 5.2 待前置完成后再启动
 
 | GPU | 任务 | 前置条件 | 目标输出目录 |
 |-----|------|----------|--------------|
-| GPU3 | Llama Fine-tuned 评估 | Llama LoRA 完成后 | /home/hiteam/results_llama |
-| GPU4 | Llama Fine-tuned+RAG | Llama Fine-tuned 三任务完成后 | /home/hiteam/results_llama |
-| GPU5 | Llama Base+RAG | 无 | /home/hiteam/results_llama |
-| GPU6 | Gemma LoRA 微调 | Gemma Baseline 已完成（满足） | /home/hiteam/checkpoints |
-| GPU7 | Gemma Fine-tuned 评估（后续接 Fine-tuned+RAG） | Gemma LoRA 完成后 | /home/hiteam/results_gemma |
+| GPU3 | DeepSeek Base+RAG（API） | 无 | /home/hiteam/results_deepseek |
+| GPU4 | Mistral Base+RAG（API） | 无 | /home/hiteam/results_mistral |
+| GPU5 | Gemma LoRA 微调（降配/QLoRA） | Gemma Baseline 已完成（满足） | /home/hiteam/checkpoints |
+| GPU6 | Gemma Fine-tuned 评估（后续接 Fine-tuned+RAG） | Gemma LoRA 完成后 | /home/hiteam/results_gemma |
+| GPU7 | 机动卡（失败任务重试/补跑） | 无 | 对应任务目录 |
 
 说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进；当前 API 线重点是 Base+RAG。
 
@@ -146,10 +152,10 @@
 
 ## 七、下一步计划（按优先级）
 
-1. 补齐 Qwen Base+RAG task3 并核验三任务指标文件。
-2. 启动 Llama LoRA -> Llama Fine-tuned -> Llama Fine-tuned+RAG。
-3. 启动 Gemma LoRA -> Gemma Fine-tuned -> Gemma Fine-tuned+RAG。
-4. 启动 DeepSeek/Mistral Base+RAG。
+1. 跑完 Qwen Fine-tuned+RAG 三任务并落盘。
+2. 用已完成的 Llama LoRA checkpoint 跑 Llama Fine-tuned 与 Fine-tuned+RAG。
+3. 启动 DeepSeek/Mistral Base+RAG 并同步结果。
+4. Gemma 微调线改为保守参数或 QLoRA 方案后重启。
 5. 同步远程结果并更新 experiment_table.csv 与报告表格。
 
 ---
