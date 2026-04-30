@@ -2,6 +2,7 @@
 
 > 更新时间：2026-04-30
 > 适用范围：仅针对本项目 `gemma-2-9b` 的剩余实验（Fine-tuned / Base+RAG / Fine-tuned+RAG）
+> 运行约束：A100 + 默认参数，不做任何 OOM 降配改参
 
 ---
 
@@ -12,6 +13,14 @@
 1. `finetuned`：task1 / task2 / task3
 2. `base_rag`：task1 / task2 / task3
 3. `finetuned_rag`：task1 / task2 / task3
+
+本手册固定使用项目初始默认训练参数：
+
+1. `per_device_train_batch_size = 4`
+2. `gradient_accumulation_steps = 4`
+3. `max_seq_length = 2048`
+
+说明：本手册不包含任何降配参数，不考虑 OOM 分支；若不是 A100，请先切换运行时后再执行。
 
 建议执行顺序：
 
@@ -32,9 +41,9 @@
 1. 打开 Colab Pro。
 2. 进入 Runtime -> Change runtime type。
 3. Hardware accelerator 选择 GPU。
-4. 优先选择 A100（最稳），其次 L4。
+4. 必须选择 A100（不是 A100 就不要继续执行）。
 
-说明：Gemma-2-9B 在 24GB 显存下训练有 OOM 风险，A100 成功率最高。
+说明：本 runbook 按 A100 固定参数设计，队友执行时不要改训练参数。
 
 ### 2.2 HuggingFace 访问
 
@@ -111,6 +120,26 @@ print('MentalChat rows:', len(load_mentalchat()))
 print('MedQuAD rows:', len(load_medquad()))
 ```
 
+### Cell 3.1: A100 与默认参数硬校验（必须通过）
+
+```python
+import torch
+from pathlib import Path
+
+assert torch.cuda.is_available(), '未检测到 GPU，请切换到 A100 运行时'
+gpu_name = torch.cuda.get_device_properties(0).name
+assert 'A100' in gpu_name, f'当前 GPU 为 {gpu_name}，本手册要求 A100'
+
+cfg_text = Path('/content/8307-project/config.py').read_text(encoding='utf-8')
+lora_text = Path('/content/8307-project/finetune/lora_train.py').read_text(encoding='utf-8')
+
+assert '"per_device_train_batch_size": 4' in cfg_text, 'batch_size 不是默认值 4'
+assert '"gradient_accumulation_steps": 4' in cfg_text, 'grad_accum 不是默认值 4'
+assert 'max_seq_length=2048,' in lora_text, 'max_seq_length 不是默认值 2048'
+
+print('A100 + 默认参数校验通过 ✓')
+```
+
 ### Cell 4: HuggingFace 登录（Gemma 必做）
 
 ```python
@@ -123,6 +152,7 @@ login()
 ```python
 import os
 DRIVE_ROOT = '/content/drive/MyDrive/8307'
+
 RESULT_DIR = f'{DRIVE_ROOT}/results_colab_gemma'
 CKPT_DIR = f'{DRIVE_ROOT}/checkpoints/gemma-2-9b'
 INDEX_DIR = f'{DRIVE_ROOT}/rag/faiss_index'
@@ -147,7 +177,7 @@ print('INDEX_DIR  =', INDEX_DIR)
 ```python
 import os, shutil
 repo_index = '/content/8307-project/rag/faiss_index'
-drive_index = '/content/drive/MyDrive/8307/rag/faiss_index'
+drive_index = INDEX_DIR
 os.makedirs(drive_index, exist_ok=True)
 
 if os.path.islink(repo_index):
@@ -178,68 +208,30 @@ else:
 ### 5.1 先尝试标准命令（A100 优先）
 
 ```python
-!python finetune/lora_train.py --model gemma-2-9b --output_dir "/content/drive/MyDrive/8307/checkpoints/gemma-2-9b"
+!python finetune/lora_train.py --model gemma-2-9b --output_dir "{CKPT_DIR}"
 ```
 
-### 5.2 如果 OOM，执行保守补丁后重试
-
-这个补丁只改当前 Colab 实例里的文件，不影响你本地仓库。
+### 5.2 训练前参数一致性复核（建议保留）
 
 ```python
 from pathlib import Path
 
-# 降训练 batch，提升梯度累积，保持等效 batch 规模
-cfg = Path('config.py')
-s = cfg.read_text(encoding='utf-8')
-s = s.replace('"per_device_train_batch_size": 4,', '"per_device_train_batch_size": 1,')
-s = s.replace('"gradient_accumulation_steps": 4,', '"gradient_accumulation_steps": 16,')
-cfg.write_text(s, encoding='utf-8')
+cfg_text = Path('/content/8307-project/config.py').read_text(encoding='utf-8')
+lora_text = Path('/content/8307-project/finetune/lora_train.py').read_text(encoding='utf-8')
 
-# 降序列长度（最关键）
-lt = Path('finetune/lora_train.py')
-t = lt.read_text(encoding='utf-8')
-t = t.replace('max_seq_length=2048,', 'max_seq_length=768,')
-lt.write_text(t, encoding='utf-8')
-
-print('OOM-safe patch applied: batch=1, grad_accum=16, max_seq_length=768')
+print('batch_size default   =', '"per_device_train_batch_size": 4' in cfg_text)
+print('grad_accum default   =', '"gradient_accumulation_steps": 4' in cfg_text)
+print('max_seq_len default  =', 'max_seq_length=2048,' in lora_text)
 ```
 
-然后再次运行训练命令：
-
-```python
-!python finetune/lora_train.py --model gemma-2-9b --output_dir "/content/drive/MyDrive/8307/checkpoints/gemma-2-9b"
-```
-
-若仍 OOM，把 `max_seq_length=768` 再降到 `512` 后重跑。
-
-### 5.3 跑完 Gemma 后恢复默认参数（重要）
-
-你之前特别强调过这一点：Gemma 的降配参数只是临时救急，完成实验后要恢复到项目最初默认配置。
-
-默认值应恢复为：
-
-1. `config.py` 中 `per_device_train_batch_size = 4`
-2. `config.py` 中 `gradient_accumulation_steps = 4`
-3. `finetune/lora_train.py` 中 `max_seq_length = 2048`
-
-在 Colab 中执行下面这段回滚 cell：
+### 5.3 训练结果落盘检查（checkpoint）
 
 ```python
 from pathlib import Path
-import re
-
-cfg = Path('config.py')
-s = cfg.read_text(encoding='utf-8')
-s = re.sub(r'"per_device_train_batch_size"\s*:\s*\d+,', '"per_device_train_batch_size": 4,', s)
-s = re.sub(r'"gradient_accumulation_steps"\s*:\s*\d+,', '"gradient_accumulation_steps": 4,', s)
-cfg.write_text(s, encoding='utf-8')
-
-lt = Path('finetune/lora_train.py')
-t = lt.read_text(encoding='utf-8')
-t = re.sub(r'max_seq_length\s*=\s*\d+,', 'max_seq_length=2048,', t)
-lt.write_text(t, encoding='utf-8')
-
-print('Gemma parameters restored to project defaults: batch=4, grad_accum=4, max_seq_length=2048')
+ckpt_root = Path(CKPT_DIR)
+print('checkpoint dir exists:', ckpt_root.exists())
+if ckpt_root.exists():
+    print('sample files:', [p.name for p in list(ckpt_root.glob('*'))[:8]])
 ```
 
 ---
@@ -250,26 +242,47 @@ print('Gemma parameters restored to project defaults: batch=4, grad_accum=4, max
 
 ```python
 !python experiments/run_finetuned.py --model gemma-2-9b --task all \
-  --lora_path "/content/drive/MyDrive/8307/checkpoints/gemma-2-9b" \
-  --output_dir "/content/drive/MyDrive/8307/results_colab_gemma"
+    --lora_path "{CKPT_DIR}" \
+    --output_dir "{RESULT_DIR}"
 ```
 
 ### Cell 9: Base + RAG（3 任务）
 
 ```python
 !python experiments/run_rag.py --model gemma-2-9b --task all \
-  --output_dir "/content/drive/MyDrive/8307/results_colab_gemma"
+    --output_dir "{RESULT_DIR}"
 ```
 
 ### Cell 10: Fine-tuned + RAG（3 任务）
 
 ```python
 !python experiments/run_rag.py --model gemma-2-9b --task all \
-  --lora_path "/content/drive/MyDrive/8307/checkpoints/gemma-2-9b" \
-  --output_dir "/content/drive/MyDrive/8307/results_colab_gemma"
+    --lora_path "{CKPT_DIR}" \
+    --output_dir "{RESULT_DIR}"
 ```
 
 说明：`run_rag.py` 已支持 partial 续跑。若中断，直接重跑同一命令即可从 partial 文件继续。
+
+### Cell 10.1: 结果文件快速点验（每步跑完都执行）
+
+```python
+from pathlib import Path
+
+base = Path(RESULT_DIR)
+checks = [
+    base / 'finetuned' / 'gemma-2-9b',
+    base / 'base_rag' / 'gemma-2-9b',
+    base / 'finetuned_rag' / 'gemma-2-9b',
+]
+
+for d in checks:
+    print('\n==', d)
+    if d.exists():
+        for f in sorted(d.glob('*_metrics.json')):
+            print('  ', f.name)
+    else:
+        print('  not found yet')
+```
 
 ---
 
@@ -280,7 +293,7 @@ print('Gemma parameters restored to project defaults: batch=4, grad_accum=4, max
 ```python
 from pathlib import Path
 
-root = Path('/content/drive/MyDrive/8307/results_colab_gemma')
+root = Path(RESULT_DIR)
 required = [
     ('finetuned', 'task1_metrics.json'),
     ('finetuned', 'task2_metrics.json'),
@@ -311,16 +324,38 @@ else:
 
 ## 8. 回传到本地并更新总表
 
+### 8.0 推荐同步方式：最终落到 Dropbox（你们当前方案）
+
+按你现在的要求，流程统一为：
+
+1. 队友在 Colab 跑完后先执行 8.1 打包。
+2. 队友把 zip 下载到自己电脑。
+3. 队友把 zip 内容拷贝到你们共享 Dropbox 目录。
+4. 你在本机从 Dropbox 合并到 `wtc/results_server/results_gemma/`。
+
+这样做的好处是：Colab 负责计算，Dropbox 负责团队共享与最终归档。
+
 ### 8.1 在 Colab 打包（可选）
 
 ```python
-!cd /content/drive/MyDrive/8307 && zip -r gemma_colab_outputs.zip results_colab_gemma checkpoints/gemma-2-9b
+!cd "{DRIVE_ROOT}" && zip -r gemma_colab_outputs.zip results_colab_gemma checkpoints/gemma-2-9b
 ```
 
 如果上面的 zip 不需要，也可直接在 Drive 网页下载这两个目录：
 
 1. `MyDrive/8307/results_colab_gemma/`
 2. `MyDrive/8307/checkpoints/gemma-2-9b/`
+
+### 8.1.1 队友本地拷贝到 Dropbox（Windows 示例）
+
+将下载后的压缩包先解压，再复制到你们 Dropbox 项目目录。示例命令：
+
+```powershell
+Expand-Archive -Path "C:\Users\<队友用户名>\Downloads\gemma_colab_outputs.zip" -DestinationPath "C:\Users\<队友用户名>\Downloads\gemma_colab_outputs" -Force
+Copy-Item -Recurse -Force "C:\Users\<队友用户名>\Downloads\gemma_colab_outputs\results_colab_gemma\*" "C:\Users\Lenovo\Dropbox\8307\wtc\results_server\results_gemma\"
+```
+
+如果队友不是你的同一台电脑，就让队友把上述 `results_colab_gemma` 目录放入你们共用的 Dropbox 文件夹，你本地同步完成后再执行 8.3。
 
 ### 8.2 在本机项目中合并
 
@@ -347,14 +382,13 @@ python tools/sync_and_summarize_results.py --skip-sync
 
 ## 9. 常见故障与处理
 
-### 9.1 CUDA out of memory
+### 9.1 不是 A100（最常见）
 
-按顺序处理：
+处理方式：
 
-1. Runtime -> Restart runtime。
-2. 先只开一个训练/推理任务，避免并行。
-3. 执行 5.2 的 OOM-safe 补丁。
-4. 把 `max_seq_length` 从 768 再降到 512。
+1. 立即停止执行，不要继续训练。
+2. 进入 Runtime -> Change runtime type，切到 A100。
+3. 重新运行 3.1 校验 cell，通过后再继续。
 
 ### 9.2 HuggingFace 401 / 权限错误
 
@@ -380,6 +414,6 @@ python tools/sync_and_summarize_results.py --skip-sync
 3. 再跑 `base_rag all`。
 4. 最后跑 `finetuned_rag all`。
 5. 每个阶段结束后先检查 metrics 文件是否落盘，再进行下一阶段。
-6. 若你用过 OOM 临时降配，收尾时务必执行 5.3 把参数恢复默认。
+6. 全程保持默认参数，不做任何降配改参。
 
 这样做的好处是：即使中途断线，也能最大化保住已完成结果。
