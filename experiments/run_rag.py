@@ -76,7 +76,8 @@ def get_model(model_name: str, lora_path: str = None):
     raise ValueError(f"Unknown model config: {model_name}")
 
 
-def run_task1_rag(model, test_df, partial_path: Path = None, save_every: int = 20):
+def run_task1_rag(model, test_df, partial_path: Path = None, save_every: int = 20,
+                  top_k: int = None):
     predictions = []
     start_idx = 0
     if partial_path is not None:
@@ -90,7 +91,7 @@ def run_task1_rag(model, test_df, partial_path: Path = None, save_every: int = 2
         tqdm(pending_df.iterrows(), total=len(pending_df), desc="Task1+RAG")
     ):
         text = _safe_text(row["text"])
-        context = retrieve(text)
+        context = retrieve(text, top_k=top_k)
         msgs = build_task1_messages(text, rag_context=context)
         pred = model.generate(msgs, max_tokens=50)
         predictions.append(pred)
@@ -103,7 +104,8 @@ def run_task1_rag(model, test_df, partial_path: Path = None, save_every: int = 2
     return results
 
 
-def run_task2_rag(model, test_df, partial_path: Path = None, save_every: int = 20):
+def run_task2_rag(model, test_df, partial_path: Path = None, save_every: int = 20,
+                  top_k: int = None):
     predictions = []
     start_idx = 0
     if partial_path is not None:
@@ -117,7 +119,7 @@ def run_task2_rag(model, test_df, partial_path: Path = None, save_every: int = 2
         tqdm(pending_df.iterrows(), total=len(pending_df), desc="Task2+RAG")
     ):
         patient_input = _safe_text(row["input"])
-        context = retrieve(patient_input)
+        context = retrieve(patient_input, top_k=top_k)
         msgs = build_task2_messages(patient_input, rag_context=context)
         pred = model.generate(msgs, max_tokens=512)
         predictions.append(pred)
@@ -130,7 +132,8 @@ def run_task2_rag(model, test_df, partial_path: Path = None, save_every: int = 2
     return results
 
 
-def run_task3_rag(model, test_df, partial_path: Path = None, save_every: int = 20):
+def run_task3_rag(model, test_df, partial_path: Path = None, save_every: int = 20,
+                  top_k: int = None):
     predictions = []
     start_idx = 0
     if partial_path is not None:
@@ -144,7 +147,7 @@ def run_task3_rag(model, test_df, partial_path: Path = None, save_every: int = 2
         tqdm(pending_df.iterrows(), total=len(pending_df), desc="Task3+RAG")
     ):
         question = _safe_text(row["question"])
-        context = retrieve(question)
+        context = retrieve(question, top_k=top_k)
         msgs = build_task3_messages(question, rag_context=context)
         pred = model.generate(msgs, max_tokens=512)
         predictions.append(pred)
@@ -164,6 +167,8 @@ def main():
                         choices=["task1", "task2", "task3", "all"])
     parser.add_argument("--lora_path", default=None,
                         help="Path to LoRA checkpoint (for finetuned+RAG)")
+    parser.add_argument("--top_k", type=int, default=None,
+                        help="Override RAG top-k retrieval (default uses config)")
     parser.add_argument("--output_dir", default=str(RESULTS_DIR))
     args = parser.parse_args()
 
@@ -185,15 +190,21 @@ def main():
         if task == "task1":
             df = load_sentiment()
             test_df = split_task1(df)
-            results = run_task1_rag(model, test_df, partial_path=partial_path)
+            results = run_task1_rag(
+                model, test_df, partial_path=partial_path, top_k=args.top_k
+            )
         elif task == "task2":
             df = load_mentalchat()
             _, test_df = split_task2(df)
-            results = run_task2_rag(model, test_df, partial_path=partial_path)
+            results = run_task2_rag(
+                model, test_df, partial_path=partial_path, top_k=args.top_k
+            )
         elif task == "task3":
             df = load_medquad(mental_health_only=False)
             test_df = split_task3(df)
-            results = run_task3_rag(model, test_df, partial_path=partial_path)
+            results = run_task3_rag(
+                model, test_df, partial_path=partial_path, top_k=args.top_k
+            )
 
         preds = results.pop("predictions")
         summary_path = out_dir / f"{task}_metrics.json"
