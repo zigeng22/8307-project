@@ -21,8 +21,8 @@
 |------|------|------|------|
 | Phase 0 | 框架搭建 + 环境验证 | ✅ 已完成 | 代码结构与评估流水线稳定 |
 | Phase 1 | Baseline | ✅ 已完成 | DeepSeek/Qwen/Llama/Gemma/Mistral 五模型 Base 三任务已补齐 |
-| Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen 微调已完成并评估完毕；Llama LoRA 已完成；Gemma LoRA 受显存限制待切换方案 |
-| Phase 3 | RAG 实验 | ⏳ 进行中 | Qwen Base+RAG 三任务已完成；Llama Base+RAG 三任务已完成；其余持续补齐 |
+| Phase 2 | LoRA 微调（开源模型） | ⏳ 进行中 | Qwen/Llama 微调与评估已完成；Gemma 微调由队友在 Colab A100 推进 |
+| Phase 3 | RAG 实验 | ⏳ 进行中 | DeepSeek/Mistral/Qwen/Llama RAG 主线已补齐；Gemma RAG 待队友结果回传 |
 | Phase 4 | 汇总分析与报告 | 🔲 未开始 | 待实验结果齐全后执行 |
 
 ---
@@ -44,7 +44,8 @@
 3. 微调
 - Qwen2.5-7B LoRA 训练已完成。
 - Qwen2.5-7B Fine-tuned：Task1/2/3 已完成。
-- Llama-3.1-8B LoRA 训练已完成（待跑 Fine-tuned / Fine-tuned+RAG）。
+- Llama-3.1-8B LoRA 训练已完成。
+- Llama-3.1-8B Fine-tuned：Task1/2/3 已完成。
 - 训练统计：
   - train_runtime: 9619.138 s
   - train_steps: 2922
@@ -53,64 +54,61 @@
   - checkpoint: /home/hiteam/checkpoints/qwen2.5-7b
 
 4. RAG
+- DeepSeek V3 Base+RAG：Task1/2/3 已完成。
+- Mistral Large Base+RAG：Task1/2/3 已完成。
 - Qwen2.5-7B Base+RAG：Task1/2/3 已完成。
+- Qwen2.5-7B Fine-tuned+RAG：Task1/2/3 已完成。
 - Llama-3.1-8B Base+RAG：Task1/2/3 已完成。
+- Llama-3.1-8B Fine-tuned+RAG：Task1/2/3 已完成。
 
 ---
 
 ## 四、当前进行中
 
-1. Qwen 评估
-- Qwen Fine-tuned：三任务已补齐。
-- Qwen Base+RAG：三任务已补齐。
+1. Gemma 微调与 RAG 收尾（队友 Colab）
+- Gemma LoRA / Fine-tuned / Base+RAG / Fine-tuned+RAG 由队友在 Colab A100 推进。
+- 你本地这条线当前主要任务是接收结果、合并到 `results_server/results_gemma`、并重建总表。
 
-2. Baseline 阶段
-- Llama：Baseline 三任务已补齐。
-- Gemma：Baseline 三任务已补齐。
-
-3. API 线 RAG 推进
-- Mistral：下一步推进 Base+RAG。
-- DeepSeek：下一步推进 Base+RAG。
-
-4. Gemma 微调线
-- Gemma LoRA：当前在 4090 24GB 上持续 OOM，正在采用更保守参数/替代方案（QLoRA 或降配）推进。
+2. 汇总与报告准备
+- 已完成结果需持续回填到课程计划文档与对比表。
+- 待 Gemma 收尾后统一进行 48 点结果复核与图表生成。
 
 ### 4.1 当前结果快照（来自 experiment_table.csv）
 
 | 模型 | 配置 | Task1 | Task2 | Task3 |
 |------|------|-------|-------|-------|
 | DeepSeek V3 | Base | ✅ | ✅ | ✅ |
+| DeepSeek V3 | Base+RAG | ✅ | ✅ | ✅ |
 | Mistral Large | Base | ✅ | ✅ | ✅ |
+| Mistral Large | Base+RAG | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Base | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Fine-tuned | ✅ | ✅ | ✅ |
 | Qwen2.5-7B | Base+RAG | ✅ | ✅ | ✅ |
+| Qwen2.5-7B | Fine-tuned+RAG | ✅ | ✅ | ✅ |
 | Llama-3.1-8B | Base | ✅ | ✅ | ✅ |
+| Llama-3.1-8B | Fine-tuned | ✅ | ✅ | ✅ |
 | Llama-3.1-8B | Base+RAG | ✅ | ✅ | ✅ |
+| Llama-3.1-8B | Fine-tuned+RAG | ✅ | ✅ | ✅ |
 | Gemma-2-9B | Base | ✅ | ✅ | ✅ |
 
 ---
 
-## 五、下一阶段 GPU 排班建议（8 卡）
+## 五、当前排班与收尾建议
 
-### 5.1 立刻可开跑（不等前置）
+### 5.1 你本地远程 8 卡（当前状态）
 
-| GPU | 任务 | 目标输出目录 |
-|-----|------|--------------|
-| GPU0 | Qwen Fine-tuned+RAG task1/2/3 | /home/hiteam/results_gangda |
-| GPU1 | Llama Fine-tuned 评估 | /home/hiteam/results_llama |
-| GPU2 | Llama Fine-tuned+RAG | /home/hiteam/results_llama |
+| 资源 | 当前任务 | 状态 |
+|------|----------|------|
+| 远程 GPU 任务线 | Qwen/Llama/DeepSeek/Mistral 剩余实验 | ✅ 已完成并入表 |
+| 远程 GPU 任务线 | Gemma 微调/RAG | ⏸️ 不在本机继续跑（移交队友 Colab A100） |
 
-### 5.2 待前置完成后再启动
+### 5.2 当前建议动作
 
-| GPU | 任务 | 前置条件 | 目标输出目录 |
-|-----|------|----------|--------------|
-| GPU3 | DeepSeek Base+RAG（API） | 无 | /home/hiteam/results_deepseek |
-| GPU4 | Mistral Base+RAG（API） | 无 | /home/hiteam/results_mistral |
-| GPU5 | Gemma LoRA 微调（降配/QLoRA） | Gemma Baseline 已完成（满足） | /home/hiteam/checkpoints |
-| GPU6 | Gemma Fine-tuned 评估（后续接 Fine-tuned+RAG） | Gemma LoRA 完成后 | /home/hiteam/results_gemma |
-| GPU7 | 机动卡（失败任务重试/补跑） | 无 | 对应任务目录 |
-
-说明：DeepSeek/Mistral 的 API 实验不占本地 GPU，可与上述任务并行推进；当前 API 线重点是 Base+RAG。
+| 优先级 | 动作 | 目标 |
+|------|------|------|
+| P0 | 接收队友 Gemma 结果并合并到本地 | 补齐最后未完成配置 |
+| P1 | 执行 `sync_and_summarize_results.py --skip-sync` 重建 CSV | 确保总表与源结果一致 |
+| P2 | 回填课程文档与最终展示表 | 进入报告撰写阶段 |
 
 ---
 
@@ -148,15 +146,19 @@
 - 旧版本因 `capture_output` 导致 scp 交互密码失败并报 `Connection closed`。
 - 新版本可在终端正常输入 SSH 密码完成三目录同步。
 
+9. API 429 限流重试（2026-04-30）
+- Mistral Base+RAG 过程中出现 OpenRouter 429（上游临时限流）。
+- 已采用 tmux + 重试循环收尾，最终成功补齐 `mistral-large base_rag` 三任务结果。
+
 ---
 
 ## 七、下一步计划（按优先级）
 
 1. 跑完 Qwen Fine-tuned+RAG 三任务并落盘。
-2. 用已完成的 Llama LoRA checkpoint 跑 Llama Fine-tuned 与 Fine-tuned+RAG。
-3. 启动 DeepSeek/Mistral Base+RAG 并同步结果。
-4. Gemma 微调线改为保守参数或 QLoRA 方案后重启。
-5. 同步远程结果并更新 experiment_table.csv 与报告表格。
+2. 接收队友 Gemma（Colab A100）输出并合并到 `results_server/results_gemma`。
+3. 重建 `results/experiment_table.csv`，核对 48 个实验点完整性。
+4. 更新课程计划文档与最终报告用图表。
+5. 进入报告撰写与误差分析阶段。
 
 ---
 
