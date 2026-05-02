@@ -1,14 +1,15 @@
-# Colab Pro 跑 Gemma 剩余实验操作手册
+# Colab Pro 跑 Gemma 复现/重跑操作手册（归档）
 
-> 更新时间：2026-04-30
-> 适用范围：仅针对本项目 `gemma-2-9b` 的剩余实验（Fine-tuned / Base+RAG / Fine-tuned+RAG）
+> 更新时间：2026-05-03
+> 当前状态：Gemma 四配置结果已完成并写入主表；本文档保留为复现或必要重跑手册。
+> 适用范围：用于复现本项目 `gemma-2-9b` 的非 baseline 配置（Fine-tuned / Base+RAG / Fine-tuned+RAG）
 > 运行约束：A100 + 默认参数，不做任何 OOM 降配改参
 
 ---
 
 ## 1. 目标与范围
 
-根据当前实验表，Gemma 已完成 Baseline，剩余 9 个结果点：
+截至 2026-05-03，Gemma 四配置结果已并入主表。若需要复现或重跑，优先关注以下 9 个非 baseline 结果点：
 
 1. `finetuned`：task1 / task2 / task3
 2. `base_rag`：task1 / task2 / task3
@@ -30,7 +31,7 @@
 4. 构建 RAG 索引（若已存在可跳过）
 5. Base+RAG（all）
 6. Fine-tuned+RAG（all）
-7. 结果校验与回传
+7. 结果校验、同步与复核
 
 ---
 
@@ -236,7 +237,7 @@ if ckpt_root.exists():
 
 ---
 
-## 6. 跑 Gemma 剩余实验
+## 6. 复现 Gemma 非 baseline 实验
 
 ### Cell 8: Fine-tuned（3 任务）
 
@@ -317,12 +318,12 @@ if missing:
     for x in missing:
         print(' -', x)
 else:
-    print('All 9 Gemma remaining metrics files are ready ✓')
+    print('All 9 Gemma non-baseline metrics files are ready ✓')
 ```
 
 ---
 
-## 8. 回传到本地并更新总表
+## 8. 结果同步与主表复核（如需重跑）
 
 ### 8.0 推荐同步方式：最终落到 Dropbox（你们当前方案）
 

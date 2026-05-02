@@ -56,6 +56,7 @@ def main():
                 predictions.append(model.generate(msgs, max_tokens=50))
             results = eval_task("task1", predictions, test_df["label"].tolist(),
                                 labels=SENTIMENT_LABELS)
+            results["predictions"] = predictions
 
         elif task == "task2":
             df = load_mentalchat()
@@ -65,6 +66,7 @@ def main():
                 msgs = build_task2_messages(row["input"])
                 predictions.append(model.generate(msgs, max_tokens=512))
             results = eval_task("task2", predictions, test_df["output"].tolist())
+            results["predictions"] = predictions
 
         elif task == "task3":
             df = load_medquad(mental_health_only=False)
@@ -74,11 +76,17 @@ def main():
                 msgs = build_task3_messages(row["question"])
                 predictions.append(model.generate(msgs, max_tokens=512))
             results = eval_task("task3", predictions, test_df["answer"].tolist())
+            results["predictions"] = predictions
 
+        preds = results.pop("predictions")
         summary_path = out_dir / f"{task}_metrics.json"
         with open(summary_path, "w") as f:
             json.dump(results, f, indent=2)
         print(f"Metrics: {json.dumps(results, indent=2)}")
+
+        preds_path = out_dir / f"{task}_predictions.json"
+        with open(preds_path, "w", encoding="utf-8") as f:
+            json.dump(preds, f, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":

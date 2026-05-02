@@ -94,6 +94,13 @@
 | Gemma-2-9B | Base+RAG | ✅ | ✅ | ✅ |
 | Gemma-2-9B | Fine-tuned+RAG | ✅ | ✅ | ✅ |
 
+### 4.2 当前结论快照（完整 48 点主矩阵）
+
+1. Task1 最优配置仍是 Mistral Large baseline，说明分类任务没有出现统一的增强收益。
+2. Task2 的最优配置已更新为 Gemma fine-tuned / fine-tuned+rag，且 3 个开源模型在 Task2 上的最佳结果都来自 finetuned 系列。
+3. Task3 对知识增强仍然敏感，但应写成“多数模型受益于 RAG”，因为 Gemma 的最优 Task3 结果来自 fine-tuned / fine-tuned+rag，而不是 plain RAG。
+4. 最终报告的主结论应保持为“方法有效但高度任务依赖”，而不是追求单一全局最优配置。
+
 ---
 
 ## 五、当前排班与收尾建议
@@ -103,7 +110,7 @@
 | 资源 | 当前任务 | 状态 |
 |------|----------|------|
 | 远程 GPU 任务线 | Qwen/Llama/DeepSeek/Mistral 剩余实验 | ✅ 已完成并入表 |
-| 远程 GPU 任务线 | Gemma 微调/RAG | ⏸️ 不在本机继续跑（移交队友 Colab A100） |
+| 远程 GPU 任务线 | Gemma 微调/RAG | ✅ 已由队友 Colab A100 完成并回填主表 |
 
 ### 5.2 当前建议动作
 
