@@ -1,7 +1,7 @@
 # 项目进度追踪文档
 
 > 项目名称：Enhancing LLM Performance on Mental Health Tasks via Fine-tuning and RAG
-> 最后更新：2026-05-02
+> 最后更新：2026-05-03
 > 维护人：wtc
 
 ---
@@ -97,9 +97,9 @@
 ### 4.2 当前结论快照（完整 48 点主矩阵）
 
 1. Task1 最优配置仍是 Mistral Large baseline，说明分类任务没有出现统一的增强收益。
-2. Task2 的最优配置已更新为 Gemma fine-tuned / fine-tuned+rag，且 3 个开源模型在 Task2 上的最佳结果都来自 finetuned 系列。
-3. Task3 对知识增强仍然敏感，但应写成“多数模型受益于 RAG”，因为 Gemma 的最优 Task3 结果来自 fine-tuned / fine-tuned+rag，而不是 plain RAG。
-4. 最终报告的主结论应保持为“方法有效但高度任务依赖”，而不是追求单一全局最优配置。
+2. Task2 的最优配置已锁定为 Gemma fine-tuned = 0.2586，且 3 个开源模型在 Task2 上的最佳结果都来自 plain fine-tuned。
+3. Task3 现在可以直接写成“RAG 最优”：五个模型在 Task3 上的最好结果都来自 Base+RAG，其中 Mistral Large base_rag = 0.3182 为全局最佳，Gemma base_rag = 0.2908 也高于其 fine-tuned / fine-tuned+rag。
+4. 最终报告的主结论应写成“方法有效且任务分工清晰”：Task1 看 baseline，Task2 看 fine-tuning，Task3 看 RAG。
 
 ---
 

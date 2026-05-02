@@ -395,9 +395,9 @@ RAG 的本质是：
 | qwen2.5-7b | base_rag | 0.5151 | 0.5132 | 0.1943 | 0.8662 | 0.3070 | 0.0020 | 0.2146 |
 | qwen2.5-7b | finetuned_rag | 0.5181 | 0.5092 | 0.2248 | 0.8794 | 0.2689 | 0.0000 | 0.1642 |
 | gemma-2-9b | baseline | 0.5483 | 0.5393 | 0.1891 | 0.8610 | 0.2510 | 0.0000 | 0.1687 |
-| gemma-2-9b | finetuned | 0.5282 | 0.5007 | 0.2586 | 0.8871 | 0.2676 | 0.0000 | 0.1638 |
-| gemma-2-9b | base_rag | 0.5252 | 0.5171 | 0.1883 | 0.8575 | 0.2508 | 0.0000 | 0.1691 |
-| gemma-2-9b | finetuned_rag | 0.5362 | 0.5163 | 0.2586 | 0.8871 | 0.2676 | 0.0000 | 0.1638 |
+| gemma-2-9b | finetuned | 0.5282 | 0.5007 | 0.2586 | 0.8871 | 0.2503 | 0.0000 | 0.1638 |
+| gemma-2-9b | base_rag | 0.5252 | 0.5171 | 0.1883 | 0.8577 | 0.2908 | 0.0000 | 0.1691 |
+| gemma-2-9b | finetuned_rag | 0.5362 | 0.5163 | 0.2470 | 0.8873 | 0.2676 | 0.0000 | 0.1638 |
 
 ---
 
@@ -409,7 +409,7 @@ RAG 的本质是：
 
 1. Task1 Accuracy：-0.0228
 2. Task2 ROUGE-L：+0.0486
-3. Task3 token F1：-0.0017
+3. Task3 token F1：-0.0075
 
 解释：Fine-tuning 对 Task2 明显有效，但并没有自动迁移到 Task1 和 Task3。
 
@@ -417,14 +417,14 @@ RAG 的本质是：
 
 1. Task1 Accuracy：-0.0254
 2. Task2 ROUGE-L：+0.0002
-3. Task3 token F1：+0.0296
+3. Task3 token F1：+0.0376
 
 解释：RAG 对 Task3 很有帮助，但对 Task1 反而不利，对 Task2 几乎没有系统性收益。
 
 ### 8.3 Fine-tuned+RAG 相对 baseline 的平均变化
 
 1. Task1 Accuracy：-0.0198
-2. Task2 ROUGE-L：+0.0423
+2. Task2 ROUGE-L：+0.0384
 3. Task3 token F1：+0.0060
 
 解释：Fine-tuned+RAG 并没有形成全任务叠加最优，尤其在 Task3 上没有稳定超过 Base+RAG。
@@ -459,7 +459,7 @@ Task2 上，Fine-tuned 明显优于 baseline，特别是：
 
 1. LoRA 的确学到了咨询对话风格与内容模式
 2. 训练分布和评估分布在 Task2 上高度对齐
-3. 三个开源模型在 Task2 上的最优配置都来自 finetuned 系列，Gemma 的加入让这一规律更明确
+3. 三个开源模型在 Task2 上的最优配置都来自 plain finetuned，Gemma 的加入把这一规律进一步锁定
 
 这里可以合理得出结论：
 
@@ -467,18 +467,19 @@ Task2 上，Fine-tuned 明显优于 baseline，特别是：
 
 ### 9.3 Task3：医疗问答任务
 
-Task3 上，RAG 在多数模型上收益最明显，但 Gemma 是一个清晰例外：
+Task3 上，RAG 的收益最稳定，而且五个模型的最优配置全部来自 Base+RAG：
 
-1. Qwen base_rag：0.3070
-2. Llama base_rag：0.2846
-3. Mistral base_rag：0.3182
-4. Gemma finetuned / finetuned_rag：0.2676（高于 baseline 0.2510，也高于 base_rag 0.2508）
+1. DeepSeek base_rag：0.2274
+2. Gemma base_rag：0.2908
+3. Qwen base_rag：0.3070
+4. Llama base_rag：0.2846
+5. Mistral base_rag：0.3182
 
 说明：
 
-1. 对 Mistral、Qwen、Llama 这三条路线，外部知识对问答最关键
-2. 但 Gemma 说明 plain RAG 并不是统一最优，部分模型的 Task3 改善更多来自领域微调
-3. 因此，Task3 更准确的表述是“知识增强通常有效，但最佳实现方式仍受模型特性影响”
+1. 五个模型在 Task3 上的单模型最优配置都来自 Base+RAG
+2. Gemma 不再是反例，其 Base+RAG = 0.2908 高于 Fine-tuned 的 0.2503 和 Fine-tuned+RAG 的 0.2676
+3. 这说明在当前设定下，Task3 的核心瓶颈仍是外部知识接入，而不是额外参数更新
 
 当前 Task3 最强配置是：
 
@@ -515,7 +516,7 @@ Task3 上，RAG 在多数模型上收益最明显，但 Gemma 是一个清晰例
 而是：
 
 - Fine-tuning 更适合 Task2 这类风格/表达依赖任务
-- RAG 在多数模型上更适合 Task3 这类知识依赖任务，但 Gemma 表明该规律不是无条件成立
+- Base+RAG 更适合 Task3 这类知识依赖任务，而且这次在五个模型上都成立
 - Task1 不适合当前 RAG 设计
 - Fine-tuned+RAG 并非天然叠加，需要更强的任务对齐或参数对齐
 
@@ -659,7 +660,7 @@ B1 的价值在于：
 
 ## 16. 可以直接写进 Final Report 的结果讨论段落（中文版）
 
-主实验结果并未支持“单一增强策略在所有任务上统一提升”的假设，而是呈现出显著的任务依赖性。Fine-tuning 在对话生成任务上表现出最明确的收益，Qwen、Llama 和 Gemma 在 Task2 上的最优配置全部来自 finetuned 系列，其中 Gemma finetuned / finetuned_rag 以 ROUGE-L 0.2586 成为新的全局最佳。相比之下，RAG 在医疗问答任务上对多数模型更有效，如 Qwen、Llama 和 Mistral 在 Task3 上均取得比 baseline 更高的 token-level F1；但 Gemma 的最佳 Task3 结果来自 finetuned / finetuned_rag，而非 plain RAG，这说明知识增强的收益仍受模型特性影响。与此同时，Task1 分类任务在加入检索上下文后普遍出现下降，说明对短文本分类而言，额外的检索内容可能带来噪声而非帮助。进一步地，Fine-tuned+RAG 并未稳定优于 Fine-tuned 或 Base+RAG，表明参数高效微调与检索增强之间存在非线性交互，而非简单可加。后续 B1 可复现性实验验证了主结果的稳定性，B2 检索强度消融实验则进一步表明，Task3 的 RAG 表现对检索深度敏感，在 qwen 和 mistral 上将 top-k 从 3 调整到 5 后均获得进一步提升。因此，本项目的核心发现并非“增强方法失效”，而是“增强方法有效但高度任务依赖，且其效果受到任务-方法匹配与参数对齐的显著影响”。
+主实验结果并未支持“单一增强策略在所有任务上统一提升”的假设，但它呈现出比此前更清晰的任务分工。Task1 上最优配置仍是 Mistral Large baseline，说明当前检索设计并没有给分类任务带来系统性收益。Task2 上则由 plain fine-tuning 明确占优，Qwen、Llama 和 Gemma 三个开源模型的最优配置全部来自 finetuned，其中 Gemma finetuned 以 ROUGE-L 0.2586 成为新的全局最佳。Task3 上的结论也重新收敛为“RAG 最优”：五个模型的最佳 Task3 配置全部来自 base_rag，其中 Mistral Large base_rag = 0.3182 为全局最佳，Gemma base_rag = 0.2908 也明显高于其 fine-tuned 和 fine-tuned+rag。与此同时，Task1 分类任务在加入检索上下文后普遍出现下降，说明对短文本分类而言，额外的检索内容更可能带来噪声而非帮助。进一步地，Fine-tuned+RAG 并未稳定优于 Fine-tuned 或 Base+RAG，表明参数高效微调与检索增强之间并不是简单可加关系。后续 B1 可复现性实验验证了主结果的稳定性，B2 检索强度消融实验则进一步表明，Task3 的 RAG 表现对检索深度敏感，在 qwen 和 mistral 上将 top-k 从 3 调整到 5 后均获得进一步提升。因此，本项目的核心发现可以更明确地写成：Task1 更依赖模型原始分类能力，Task2 最受益于领域微调，Task3 最受益于外部知识检索。
 
 ---
 
