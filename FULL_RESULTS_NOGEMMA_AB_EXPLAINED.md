@@ -1,8 +1,8 @@
-# 完整实验说明文档（除 Gemma）+ AB 对齐实验详解
+# 完整实验说明文档（含 Gemma）+ AB 对齐实验详解
 
 更新日期：2026-05-02
 适用对象：项目组全体成员、展示汇报撰写人、最终报告整合人
-范围：DeepSeek、Mistral、Llama、Qwen 的主实验结果与 B1/B2 对齐实验；Gemma 因完整线尚未回传，不纳入本稿主结论
+范围：DeepSeek、Mistral、Llama、Qwen、Gemma 的主实验结果与 B1/B2 对齐实验
 定位：本文件是当前“主实验 + 对齐补实验 + 写作口径”的单一说明来源
 
 ---
@@ -113,12 +113,13 @@
 
 ## 4. 主实验设计概览
 
-### 4.1 模型范围（本稿不含 Gemma）
+### 4.1 模型范围（含 Gemma）
 
 1. DeepSeek V3（API）
 2. Mistral Large（API）
 3. Llama-3.1-8B（开源）
 4. Qwen2.5-7B（开源）
+5. Gemma-2-9B（开源）
 
 ### 4.2 三个任务
 
@@ -374,7 +375,7 @@ RAG 的本质是：
 
 ---
 
-## 7. 主实验完整结果（除 Gemma）
+## 7. 主实验完整结果（含 Gemma）
 
 下表给出当前主实验的核心结果。为兼顾可读性，本表保留主结论最关键的指标；完整 CSV 仍以 `results/experiment_table.csv` 为准。
 
@@ -392,6 +393,10 @@ RAG 的本质是：
 | qwen2.5-7b | finetuned | 0.5402 | 0.5347 | 0.2366 | 0.8833 | 0.2595 | 0.0000 | 0.1504 |
 | qwen2.5-7b | base_rag | 0.5151 | 0.5132 | 0.1943 | 0.8662 | 0.3070 | 0.0020 | 0.2146 |
 | qwen2.5-7b | finetuned_rag | 0.5181 | 0.5092 | 0.2248 | 0.8794 | 0.2689 | 0.0000 | 0.1642 |
+| gemma-2-9b | baseline | 0.5483 | 0.5393 | 0.1891 | 0.8610 | 0.2510 | 0.0000 | 0.1687 |
+| gemma-2-9b | finetuned | 0.5282 | 0.5007 | 0.2586 | 0.8871 | 0.2676 | 0.0000 | 0.1638 |
+| gemma-2-9b | base_rag | 0.5252 | 0.5171 | 0.1883 | 0.8575 | 0.2508 | 0.0000 | 0.1691 |
+| gemma-2-9b | finetuned_rag | 0.5362 | 0.5163 | 0.2586 | 0.8871 | 0.2676 | 0.0000 | 0.1638 |
 
 ---
 
@@ -401,25 +406,25 @@ RAG 的本质是：
 
 ### 8.1 Fine-tuned 相对 baseline 的平均变化
 
-1. Task1 Accuracy：-0.0242
-2. Task2 ROUGE-L：+0.0381
-3. Task3 token F1：-0.0109
+1. Task1 Accuracy：-0.0228
+2. Task2 ROUGE-L：+0.0486
+3. Task3 token F1：-0.0017
 
 解释：Fine-tuning 对 Task2 明显有效，但并没有自动迁移到 Task1 和 Task3。
 
 ### 8.2 Base+RAG 相对 baseline 的平均变化
 
-1. Task1 Accuracy：-0.0259
-2. Task2 ROUGE-L：+0.0005
-3. Task3 token F1：+0.0370
+1. Task1 Accuracy：-0.0254
+2. Task2 ROUGE-L：+0.0002
+3. Task3 token F1：+0.0296
 
 解释：RAG 对 Task3 很有帮助，但对 Task1 反而不利，对 Task2 几乎没有系统性收益。
 
 ### 8.3 Fine-tuned+RAG 相对 baseline 的平均变化
 
-1. Task1 Accuracy：-0.0237
-2. Task2 ROUGE-L：+0.0286
-3. Task3 token F1：+0.0008
+1. Task1 Accuracy：-0.0198
+2. Task2 ROUGE-L：+0.0423
+3. Task3 token F1：+0.0060
 
 解释：Fine-tuned+RAG 并没有形成全任务叠加最优，尤其在 Task3 上没有稳定超过 Base+RAG。
 
@@ -445,8 +450,9 @@ Task1 上，多数 RAG 配置都下降，这说明：
 
 Task2 上，Fine-tuned 明显优于 baseline，特别是：
 
-1. Qwen finetuned：ROUGE-L 0.2366
-2. Llama finetuned：ROUGE-L 0.2317
+1. Gemma finetuned：ROUGE-L 0.2586
+2. Qwen finetuned：ROUGE-L 0.2366
+3. Llama finetuned：ROUGE-L 0.2317
 
 说明：
 
@@ -690,10 +696,9 @@ B1 的价值在于：
 
 ### 18.1 当前局限性
 
-1. Gemma 完整线尚未回传，因此总矩阵尚未完全闭合
-2. 目前大多是单次运行结果，尚未做多随机种子重复
-3. Task2 缺少系统性人工评价，自动指标无法完全覆盖共情与安全性
-4. B2 目前只在 qwen 和 mistral 上验证，尚未对所有模型统一重跑 top-k=5
+1. 全矩阵目前仍以单次运行为主（含 Gemma），尚未做多随机种子重复
+2. Task2 缺少系统性人工评价，自动指标无法完全覆盖共情与安全性
+3. B2 目前只在 qwen 和 mistral 上验证，尚未对所有模型统一重跑 top-k=5
 
 ### 18.2 为什么这些局限不会毁掉项目
 
@@ -710,7 +715,7 @@ B1 的价值在于：
 
 可以在报告中诚实写：
 
-- 受时间与算力限制，我们优先完成了主矩阵和关键补实验；对于 Gemma 和更全面的 top-k 统一重跑，我们将其视为后续工作。尽管如此，现有结果已经足以支持关于任务依赖增益与检索参数敏感性的主要结论。
+- 受时间与算力限制，我们优先完成了 48 点主矩阵和关键补实验；对于更全面的多随机种子复跑与 top-k 全模型统一重跑，我们将其视为后续工作。尽管如此，现有结果已经足以支持关于任务依赖增益与检索参数敏感性的主要结论。
 
 ---
 
@@ -725,7 +730,7 @@ B1 的价值在于：
 如果把项目看成一个实际系统：
 
 1. Task1：优先使用 Mistral Large baseline
-2. Task2：优先使用 Qwen finetuned
+2. Task2：优先使用 Gemma finetuned（与 Gemma finetuned_rag 同分）
 3. Task3：优先使用 Mistral base_rag，并考虑 top-k=5
 
 也就是说，按任务路由配置比坚持单一全局配置更有效。
@@ -734,7 +739,7 @@ B1 的价值在于：
 
 ## 20. 后续收尾建议
 
-1. Gemma 结果回传后，只需补入主表，不需要推翻当前结论框架
+1. Gemma 已补入主表，不需要再单独等待回传；后续只做必要复核
 2. 主实验表保留为 control，不要把 B2 的 k=5 直接混入主矩阵
 3. 在 Final Report 中把 B1/B2 放入“Additional Analysis”或“Ablation/Alignment Study”
 4. 若展示时间有限，优先讲清楚指标设计、主实验分化规律、B1/B2 两个补实验结论
@@ -747,4 +752,4 @@ B1 的价值在于：
 
 1. 组内统一口径以本文件为准
 2. 展示准备、报告讨论、结果解释以本文件为准
-3. 后续仅在 Gemma 回传后做补充更新，不再拆分为多个并行说明文档
+3. 后续更新聚焦复核与展示材料完善，不再拆分为多个并行说明文档

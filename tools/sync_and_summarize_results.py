@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 CONFIG_NAMES = {"baseline", "finetuned", "base_rag", "finetuned_rag"}
+EXCLUDED_DIR_NAMES = {"results_abtest"}
 
 
 def run_cmd(cmd, interactive=False):
@@ -45,6 +46,10 @@ def parse_metrics_files(roots):
             continue
 
         for f in root.rglob("*_metrics.json"):
+            # Keep the control matrix clean: AB alignment outputs are summarized separately.
+            if any(name in EXCLUDED_DIR_NAMES for name in f.parts):
+                continue
+
             parts = f.parts
             cfg_idx = -1
             for i, p in enumerate(parts):

@@ -1,0 +1,13 @@
+{
+  "accuracy": 0.5362,
+  "macro_f1": 0.5163,
+  "per_class": {
+    "Normal": 0.6266,
+    "Depression": 0.5,
+    "Suicidal": 0.5259,
+    "Anxiety": 0.5949,
+    "Stress": 0.4859,
+    "Bipolar": 0.7143,
+    "Personality disorder": 0.1667
+  }
+}
