@@ -115,6 +115,7 @@ Follow-up validation includes B1 reproducibility and B2 top-k ablation.
 
 ### 图表建议
 - 用简洁矩阵图，不要上完整大表。
+- 可直接使用：wtc/ppt_review_assets/generated/slide3_experiment_matrix.svg
 
 ### 备注
 - 这一页是体现“我们做得系统、工作量充足”的关键页。
@@ -181,6 +182,7 @@ These methods solve different problems.
 ### 图表建议
 - LoRA 流程：Base model -> LoRA adapters -> adapted model
 - RAG 流程：Query -> retrieval -> retrieved context -> answer
+- 可直接使用：wtc/ppt_review_assets/generated/slide5_method_overview.svg
 
 ### 备注
 - 这一页只讲方法逻辑，不讲参数细节。
@@ -217,6 +219,7 @@ No single configuration is best across all three tasks.
 ### 图表建议
 - 每个 task 用一个固定强调色。
 - 整页尽量留白，让观众记住三个 winner 就够了。
+- 可直接使用：wtc/ppt_review_assets/generated/slide6_task_winners.svg
 
 ## 第 7 页：Task 1 与 Task 2 的分化
 
@@ -254,6 +257,7 @@ Dialogue quality benefits more from domain adaptation than from retrieval.
 - 左图可做 Task 1 configuration comparison。
 - 右图可做 Task 2 configuration comparison。
 - 如果只能补一张图，就做 Task1 vs Task2 的平均增益分组柱状图。
+- 优先资产：wtc/ppt_review_assets/generated/slide7_task12_avg_delta.svg
 
 ### 备注
 - 这一页要让听众第一次明确感受到：不同任务确实对应不同增强策略。
@@ -269,10 +273,10 @@ Task 3 Favors Base + RAG
 - 页底：一句总 takeaway
 
 ### 左侧图标题（英文）
-Task 3 Performance by Configuration
+Best Task 3 Result by Model
 
 ### 左侧图下注（英文）
-Base + RAG delivers the strongest Task 3 results across models.
+All five Task 3 winners come from Base + RAG.
 
 ### 右侧模块文字（英文）
 - All five models achieve their best Task 3 result with Base + RAG.
@@ -284,13 +288,15 @@ Base + RAG delivers the strongest Task 3 results across models.
 For factual mental-health QA, external knowledge grounding matters most.
 
 ### 版式建议
-- 左边放一张主图，优先展示 Task 3 在不同 configuration 下的差异。
+- 左边放一张主图，优先展示不同模型在 Task 3 上的最佳结果。
 - 右边放 4 条解释 bullets，并把 Gemma 修正口径单独高亮。
 - 页底只放一句 takeaway，不要再补第二句总结。
 
 ### 图表建议
 - 最值得做的是 Gemma 四配置柱状图，这样“Gemma 不再是反例”会很直观。
 - 如果版面够大，也可以把左图改成“全部模型在 Task 3 的最佳 configuration 对比图”。
+- 主图资产：wtc/ppt_review_assets/generated/slide8_task3_best_by_model.svg
+- 补充资产：wtc/ppt_review_assets/generated/slide8_gemma_task3_configs.svg
 
 ### 备注
 - 这一页是最终主结论最重要的证据页之一。
@@ -334,6 +340,7 @@ Final Conclusions
   - Task 1 -> Baseline
   - Task 2 -> Fine-tuning
   - Task 3 -> Base + RAG
+- 可直接使用：wtc/ppt_review_assets/generated/slide9_task_method_alignment.svg
 
 ### 备注
 - 这一页负责收口，语气要稳，不要再展开新实验细节。
@@ -359,6 +366,10 @@ Additional Validation: B1 and B2
 ### 版式建议
 - 上半页放 B1 小表格。
 - 下半页放 B2 小图或两行表格。
+
+### 图表建议
+- B1 可直接使用：wtc/ppt_review_assets/generated/backup_b1_reproducibility.svg
+- B2 可直接使用：wtc/ppt_review_assets/generated/backup_b2_topk.svg
 
 ### 使用说明
 - 只有在老师问到稳定性、复现性、参数敏感性时再翻这页。
