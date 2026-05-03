@@ -1,0 +1,275 @@
+PAGE 1
+A Comparative Study across Classification, Counseling Dialogue, and Medical QA
+Enhancing LLM Performance on Mental 
+Health Tasks via Fine-tuning and RAG
+STAT8307 Project                                 04/05/2026       
+Wang Tiance              3036648339
+Meng Fanchao           3036646460
+Jian Zhangshu            3036458332
+Quan Yifan                 3036647517
+Zhu Mengwen            3036650887
+---
+
+PAGE 2
+Motivation &
+Research Questions
+Datasets & 
+Evaluation Tasks
+01
+02
+Content
+LoRA Fine-tuning &
+RAG Pipeline
+03
+Experimental Results & 
+Analysis
+04
+---
+
+PAGE 3
+Why Mental Health LLMs Matter
+Mental-health NLP requires multiple abilities:
+•
+01 - Recognition
+Classify user mental health status
+•
+02 - Empathy
+Generate supportive counseling responses
+•
+03 - Factual Grounding
+Answer medical knowledge questions
+General-purpose LLMs may:
+- lack domain-specific clinical knowledge
+- produce generic or weakly empathetic responses
+- struggle with reliable factual grounding
+We therefore evaluate whether LoRA fine-tuning and RAG
+improve LLMs across different mental-health tasks.
+---
+
+PAGE 4
+Research Questions and Study Design
+We evaluate 5 LLMs across 3 tasks and 4 configurations.
+RQ1 — Baseline 
+Comparison
+How well do different LLMs 
+perform on mental-health 
+tasks without adaptation?
+Zero-shot evaluation 
+across 5 models.
+RQ3 — RAG & 
+Combination
+Does RAG improve performance, 
+and is Fine-tuned + RAG always 
+the best?
+Tests whether retrieval helps all 
+tasks or only knowledge-
+intensive QA.
+RQ2 — LoRA Fine-
+tuning
+Does LoRA fine-tuning improve 
+open-source LLMs on mental-
+health tasks?
+Applied to Llama, Qwen, and 
+Gemma.
+---
+
+PAGE 5
+Content
+Motivation &
+Research Questions
+Datasets & 
+Evaluation Tasks
+01
+02
+LoRA Fine-tuning &
+RAG Pipeline
+03
+Experimental Results & 
+Analysis
+04
+---
+
+PAGE 6
+Datasets
+Dataset
+Role in Project
+Key Information
+Sentiment Analysis for 
+Mental Health
+Task 1: Classification
+53,043 user statements; 7 mental-health 
+labels
+MentalChat16K
+LoRA training + Task 2
+16,084 instruction/input/output dialogue pairs
+MedQuAD
+RAG knowledge base + Task 3
+16,412 medical question-answer records
+Each dataset supports a different stage of our pipeline — classification,
+fine-tuning/dialogue generation, and retrieval-based QA.
+---
+
+PAGE 7
+Tasks and Evaluation Metrics
+Task 1
+Mental Health Status 
+Classification
+• Input: User statement
+• Output: One of 7 mental-
+health labels
+• Metrics:Accuracy, Macro-
+F1
+“I feel anxious all the time.”
+→ Anxiety
+Task 2
+Counseling Dialogue 
+Generation
+• Input: Patient concern
+• Output: Empathetic 
+counseling response
+• Metrics: ROUGE-L, 
+BERTScore
+“I feel overwhelmed...”
+→ supportive response
+Task 3
+Medical Knowledge QA
+• Input: Medical question
+• Output: Factual medical 
+answer
+• Metrics: Token-F1, 
+ROUGE-L, Exact Match
+“What are the symptoms of 
+depression?”
+→ medical answer
+Classification, dialogue generation, and medical QA measure different capabilities of 
+mental-health LLMs.
+---
+
+PAGE 8
+Content
+Motivation &
+Research Questions
+Datasets & 
+Evaluation Tasks
+01
+02
+LoRA Fine-tuning &
+RAG Pipeline
+03
+Experimental Results & 
+Analysis
+04
+---
+
+PAGE 9
+Models and Experimental Configurations
+API models are evaluated with Base and RAG; open-source models are additionally evaluated 
+with LoRA.
+Model
+Type
+Fine-tunable
+DeepSeek V3
+API / closed-source
+No
+Mistral Large
+API / closed-source
+No
+Llama-3.1-8B-Instruct
+open-source
+Yes
+Qwen2.5-7B-Instruct
+open-source
+Yes
+Gemma-2-9B-it
+open-source
+Yes
+Configuration
+Meaning
+Base
+zero-shot baseline
+Fine-tuned
+LoRA on MentalChat16K
+Base + RAG
+retrieval from MedQuAD
+Fine-tuned + RAG
+LoRA + retrieval
+Fine-tuning is only applied to open-source models.
+---
+
+PAGE 10
+Method 1: LoRA Fine-tuning
+LoRA should benefit Task 2 most, because MentalChat16K 
+is counseling-style dialogue data.
+Parameter
+Value
+LoRA rank
+16
+LoRA alpha
+32
+Dropout
+0.05
+Target modules
+q/k/v/o projection layers
+Epochs
+3
+Learning rate
+2e-4
+Batch size
+4
+Gradient 
+accumulation
+4
+Open-source LLM
+Llama / Qwen / Gemma
+Freeze base weights
+Train LoRA adapters
+Mental-health 
+Adapted Model
+---
+
+PAGE 11
+Method 2: RAG Pipeline
+RAG is expected to benefit Task 3 most, because medical
+QA is knowledge-intensive.
+Component
+Setting
+Knowledge base
+MedQuAD
+Embedding model
+all-MiniLM-L6-v2
+Vector database
+FAISS
+Chunk size
+500
+Chunk overlap
+50
+Default top-k
+3
+MedQuAD QA Pairs
+Embedding + FAISS Index
+Retrieve Top-k Passages
+Add Context to Prompt
+Generate Grounded 
+Answer
+---
+
+PAGE 12
+Content
+Motivation &
+Research Questions
+Datasets & 
+Evaluation Tasks
+01
+02
+LoRA Fine-tuning &
+RAG Pipeline
+03
+Experimental Results & 
+Analysis
+04
+---
+
+PAGE 13
+Thanks For Your Listening!
+STAT8307 Project                                 04/05/2026
+---
